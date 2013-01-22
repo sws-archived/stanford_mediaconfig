@@ -1,0 +1,503 @@
+<?php
+
+/**
+ * @file
+ * @author  Shea McKinney <shea@imagexmedia.com>
+ */
+
+define('STANFORD_MEDIA_UPLOAD_DIR', 'media');
+
+/**
+ * TESTING PAGES
+ * /admin/config/media/browser
+ */
+
+
+/**
+ * Implements hook_help().
+ */
+function stanford_mediaconfig_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#stanford_mediaconfig':
+      return '<p>' . t('help@stanford.edu') . '</p>';
+  }
+}
+
+
+/**
+ * Implements hook_enable().
+ * This is just like an installation profile for this module. In here we will
+ * tackle most of the installation tasks for this module.
+ */
+function stanford_mediaconfig_enable() {
+
+
+  // MEDIA
+  // ---------------------------------------------------------------------------
+
+  variable_set('media_root_folder', STANFORD_MEDIA_UPLOAD_DIR);
+  variable_set('media__dialog_theme', 'seven');
+  variable_set('image_jpeg_quality', 95);
+
+  // FILE + ENTITIY DISPLAY SETTINGS
+  // ---------------------------------------------------------------------------
+  stanford_mediaconfig_enable_filedisplay();
+
+
+  // MEDIA BROWSER PLUS
+  // ---------------------------------------------------------------------------
+
+
+
+
+  // MEDIA CROP
+  // ---------------------------------------------------------------------------
+
+
+
+
+  // WYSIWYG
+  // ---------------------------------------------------------------------------
+
+  if (module_exists('wysiwyg')) {
+    stanford_mediaconfig_enable_wysiwyg();
+  }
+  else {
+    // This should never get here as it is in the dependencies but there have
+    // been cases where this may have errored during install.
+    drupal_set_message('ERROR: MISSING WYSIWYG MODULE', 'error');
+  }
+
+
+  // MEDIA RESPONSIVE
+  // ---------------------------------------------------------------------------
+
+
+
+
+  // VIDEO + FitVids
+  // ---------------------------------------------------------------------------
+
+
+
+
+  // DEFAULT FOLDERS
+  // ---------------------------------------------------------------------------
+  stanford_mediaconfig_enable_folders();
+
+
+
+  // USERS + Permissions
+  // ---------------------------------------------------------------------------
+
+
+
+
+  drupal_flush_all_caches();
+}
+
+/**
+ * Implements hook_requirements().
+ * Check to see if the cropping plugin is available
+ */
+function stanford_mediaconfig_requirements($phase) {
+
+  $req = array();
+  $libraries = libraries_get_libraries();
+
+
+
+  // Runtime and Installation Requirements.
+  // Found at /admin/reports/status
+  if ($phase == "runtime" || $phase == "install") {
+
+    // For using responsive videos.
+    if (!isset($libraries['fitvids'])) {
+      $req['fitvids'] = array(
+      "title" => t("FitVids Plugin"),
+      "value" => 'Missing Library Plugin: FitVids. Please ' . l('download it', 'https://github.com/davatron5000/FitVids.js', array('absolute'=>TRUE)) . ' and place it into sites/all/libraries',
+      "severity" => REQUIREMENT_ERROR,
+      );
+    }
+
+    // For media crop module.
+    if (!isset($libraries['jquery.imgareaselect'])) {
+      $req['media_crop'] = array(
+      "title" => t("Missing Crop Plugin"),
+      "value" => 'Missing Library Plugin: jquery.imgareaselect. Please ' . l('download it', 'http://odyniec.net/projects/imgareaselect/jquery.imgareaselect-0.9.9.zip', array('absolute'=>TRUE)) . ' and place it into sites/all/libraries',
+      "severity" => REQUIREMENT_ERROR,
+      );
+    }
+
+  }
+
+  return $req;
+}
+
+
+
+
+/**
+ * Enable WYSIWYG Settings and configuration.
+ * Run on hook_enable
+ */
+
+function stanford_mediaconfig_enable_wysiwyg() {
+
+  // Settings found at /admin/config/media/browser.
+  $allowed_types = array(
+    'image',
+    'video',
+    'audio',
+    'document'
+  );
+  variable_set('media__wysiwyg_allowed_types', $allowed_types);
+
+  $field_plugins = array(
+    'upload',
+    'library_plus',
+    'media_default--media_browser_my_files',
+    'media_internet',
+  );
+  variable_set('media__wysiwyg_browser_plugins', $field_plugins);
+
+  variable_set('media__wysiwyg_upload_directory', STANFORD_MEDIA_UPLOAD_DIR);
+
+  // End ettings found at /admin/config/media/browser.
+
+
+
+  // To add the media button to wysiwyg we will have to add the media markup
+  // filter to each of the input formats in use then add the button to the
+  // wysiwyg profile settings.
+
+  $profiles = db_select('wysiwyg', 'w')
+            ->fields('w')
+            ->execute();
+
+            // Foreach of the profiles get the settings and add the filter
+  while ($record = $profiles->fetchAssoc()) {
+    $settings = unserialize($record['settings']);
+    $filter = $record['format'];
+
+    // Check to see if the enabled markup is enabled on filter
+    $filters = db_select('filter', 'f')
+            ->fields('f')
+            ->condition('format', $filter)
+            ->condition('module', 'media')
+            ->execute()
+            ->fetchAssoc();
+
+    if (!is_array($filters)) {
+      // Add the convert to markup filter
+      $media_filter = array(
+        'format'    => $filter,
+        'module'    => 'media',
+        'name'      => 'media_filter',
+        'weight'    => -10,
+        'status'    => 1,
+        'settings'  => array(),
+      );
+
+      drupal_write_record('filter', $media_filter);
+    }
+
+    // Allow crop and browser functionality in the wysiwyg.
+    $settings['buttons']['media_crop_ckeditor'] = array('media_crop_edit_instance');
+    $settings['buttons']['drupal']['media'] = 1;
+    $settings = serialize($settings);
+
+    $wys = array(
+      'format' => $filter,
+      'settings' => $settings,
+      'editor' => $record['editor'],
+    );
+    drupal_write_record('wysiwyg', $wys, array('format', 'editor'));
+  }
+
+
+
+}
+
+
+/**
+ * @hook_enable sub function.
+ * Create default folders for the media library to keep stuff organized
+ */
+
+function stanford_mediaconfig_enable_folders() {
+
+  // We do not want to duplicate the folder on every enable. Just store it once.
+  $one_run = variable_get('stanford_mediaconfig_installed_folders', FALSE);
+  if ($one_run) {
+    return;
+  }
+
+  /**
+   * Set up the media browser library folders like this.
+   * -- Media Root
+   * -- Images
+   * --- Thumbnails
+   * --- Icons
+   * --- Banners
+   * --- Blocks
+   * -- Documents
+   * --- Forms
+   * --- PDF
+   * -- Video
+   * --- YouTube
+   * --- Vimeo
+   * --- Streaming
+   */
+
+  // Media folders vocabulary
+  $vocabulary = taxonomy_vocabulary_machine_name_load('media_folders');
+
+  // Media Root
+  // Leave alone for now
+
+
+  // Images
+  $term = new stdClass();
+  $term->vid = $vocabulary->vid;
+  $term->name = t("Images");
+  $term->format = "filtered_html";
+  taxonomy_term_save($term);
+
+    // Thumbnails
+    $term->name = t('Thumbnails');
+    $term->parent = $term->tid;
+    unset($term->tid);
+    taxonomy_term_save($term);
+
+    // Icons
+    $term->name = t('Icons');
+    unset($term->tid);
+    taxonomy_term_save($term);
+
+    // Banners
+    $term->name = t('Banners');
+    unset($term->tid);
+    taxonomy_term_save($term);
+
+    // Blocks
+    $term->name = t('Blocks');
+    unset($term->tid);
+    taxonomy_term_save($term);
+
+  // Documents
+  unset($term->parent);
+  unset($term->tid);
+  $term->name = t("Documents");
+  $parent_term = taxonomy_term_save($term);
+
+    // Forms
+    $term->parent = $term->tid;
+    $term->name = t("Forms");
+    unset($term->tid);
+    taxonomy_term_save($term);
+
+    // PDF
+    $term->name = t("PDF");
+    unset($term->tid);
+    taxonomy_term_save($term);
+
+    // Documents
+  unset($term->parent);
+  unset($term->tid);
+  $term->name = t("Video");
+  $parent_term = taxonomy_term_save($term);
+
+    // YouTube
+    $term->parent = $term->tid;
+    $term->name = t("YouTube");
+    unset($term->tid);
+    taxonomy_term_save($term);
+
+    // Vimeo
+    $term->name = t("Vimeo");
+    unset($term->tid);
+    taxonomy_term_save($term);
+
+
+  // Success!
+  variable_set('stanford_mediaconfig_installed_folders', TRUE);
+
+}
+
+
+/**
+ * hook_enable sub function
+ * Configure the file and image display settings for output. This includes
+ * The file and entity displays
+ */
+
+function stanford_mediaconfig_enable_filedisplay() {
+
+  // $formatters = file_info_formatter_types();
+  // We are just going to hardcode these for now....
+
+
+
+  // Display for IMAGE file type on DEFAULT view mode
+  // ---------------------------------------------------------------------------
+  $settings = array(
+    'image_style' => 'media_responsive_widest',
+    'alt' => '[file:field_file_image_alt_text]',
+    'title' => '[file:field_file_image_title_text]',
+  );
+
+  $formatter = array(
+    'name' => 'image__default__file_image',
+    'weight' => -49,
+    'status' => 1,
+    'settings' => $settings,
+  );
+
+  // Just get rid of any old one then save a new one.
+  db_delete('file_display')
+    ->condition('name', 'image__default__file_image')
+    ->execute();
+  drupal_write_record('file_display', $formatter);
+
+
+  // Image Bundle + Field Instance Settings.
+  // ---------------------------------------------------------------------------
+
+  // $settings = variable_get('field_bundle_settings_file__image', array());
+  // variable_set('field_bundle_settings_file__image', $settings);
+
+  $fields = db_select('field_config_instance', 'fci')
+            ->fields('fci')
+            ->condition('entity_type', 'file', '=')
+            ->condition('bundle', 'image', '=')
+            ->execute();
+
+  // Set all fields to hidden by default on the default view mode
+  while ($fs = $fields->fetchAssoc()) {
+    $instance = field_info_instance($fs['entity_type'], $fs['field_name'], $fs['bundle']);
+    foreach ($instance['display'] as $k => $v) {
+      $instance['display'][$k]['type'] = "hidden";
+    }
+    field_update_instance($instance);
+  }
+
+
+  // File Type Streams Allowed for Images
+  // ---------------------------------------------------------------------------
+
+  db_delete('file_type_streams')
+    ->condition('type', 'image')
+    ->condition('stream', 'public')
+    ->condition('stream', 'vimeo', "or")
+    ->condition('stream', 'youtube', "or")
+    ->execute();
+
+  db_insert('file_type_streams')
+    ->fields(array(
+      'type',
+      'stream',
+    ))
+    ->values(array(
+      array(
+        'type'    => 'image',
+        'stream'  => 'public',
+      ),
+    )
+  );
+
+
+  // File Type Streams Allowed for Video
+  // ---------------------------------------------------------------------------
+
+  db_delete('file_type_streams')
+    ->condition('type', 'video')
+    ->condition('stream', 'public')
+    ->condition('stream', 'vimeo', "or")
+    ->condition('stream', 'youtube', "or")
+    ->execute();
+
+  db_insert('file_type_streams')
+    ->fields(array(
+      'type',
+      'stream',
+    ))
+    ->values(array(
+      array(
+        'type'    => 'video',
+        'stream'  => 'public',
+      ),
+      array(
+        'type'    => 'video',
+        'stream'  => 'vimeo',
+      ),
+      array(
+        'type'    => 'video',
+        'stream'  => 'youtube',
+      ),
+    )
+  );
+
+
+  // File Type Streams Allowed for Generic Files
+  // ---------------------------------------------------------------------------
+
+
+
+
+  // File Type Streams Allowed for Audio
+  // ---------------------------------------------------------------------------
+
+
+
+
+
+}
+
+
+//  ////////////////////////////////////////////////////////////////////////////
+//  HOOKS N PATCHES FOR INCOMPATIBIILTY ISSUES
+//  ////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Implements hook_entity_info_alter().
+ *
+ * Add media_responsive view modes to the file entity type.
+ */
+function stanford_mediaconfig_entity_info_alter(&$entity_info) {
+  $entity_info['file']['view modes']['media_crop'] = array('label' => t('Media Crop'), 'custom settings' => FALSE);
+}
+
+/**
+ * [media_crop_media_token_to_markup_alter description]
+ * @param  [type] $element  [description]
+ * @param  [type] $tag_info [description]
+ * @param  [type] $settings [description]
+ * @return [type]           [description]
+ */
+function media_crop_media_token_to_markup_alter(&$element, $tag_info, $settings) {
+
+
+
+}
+
+//  ////////////////////////////////////////////////////////////////////////////
+//   END HOOKS N PATCHES
+//  ////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+/**
+ * Implements hook_form_alter().
+ */
+function stanford_mediaconfig_form_alter(&$form, &$form_state, $form_id) {
+
+
+  $whatshere = "nothing";
+
+}
+
+
