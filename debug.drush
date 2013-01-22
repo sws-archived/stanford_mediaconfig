@@ -1,0 +1,23 @@
+<?php
+
+
+function dump_libs($args) {
+  $libs = libraries_get_libraries();
+  var_dump($libs);
+}
+
+function entityinfo() {
+  $file_entity_info = entity_get_info('file');
+  var_dump($file_entity_info);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+$args = drush_get_arguments();
+if(function_exists($args[2])) {
+  $args[2]($args);
+  drush_log('completed running', 'ok');
+} else {
+  drush_log('Could not find drush script command', 'error');
+}
