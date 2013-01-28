@@ -47,13 +47,14 @@ function stanford_mediaconfig_enable() {
   // MEDIA BROWSER PLUS
   // ---------------------------------------------------------------------------
 
-
+  /* Seems to be working fine out of the box. */
 
 
   // MEDIA CROP
   // ---------------------------------------------------------------------------
 
-
+  /* Heavily patched module is available at: https://github.com/sherakama/media_crop */
+  /* Patches were submitted to the maintainers for inclusion into module. */
 
 
   // WYSIWYG
@@ -72,7 +73,7 @@ function stanford_mediaconfig_enable() {
   // MEDIA RESPONSIVE
   // ---------------------------------------------------------------------------
 
-
+  /* No configuration for this but a hack/patch below */
 
 
   // VIDEO + FitVids
@@ -469,35 +470,34 @@ function stanford_mediaconfig_entity_info_alter(&$entity_info) {
 }
 
 /**
- * [media_crop_media_token_to_markup_alter description]
+ * If media_responsive and media_crop both exist we need to create a patch
+ * between the two to work as they both override themeable output.
  * @param  [type] $element  [description]
  * @param  [type] $tag_info [description]
  * @param  [type] $settings [description]
  * @return [type]           [description]
  */
-function media_crop_media_token_to_markup_alter(&$element, $tag_info, $settings) {
+function stanford_mediaconfig_media_token_to_markup_alter(&$element, $tag_info, $settings) {
 
+  if (module_exists('media_responsive') && module_exists('media_crop')) {
 
+    if (isset($element['content']['file']['#style_name']) &&
+    $element['content']['file']['#style_name'] == "media_responsive_widest") {
+      $element['#attributes']['class'][] = "file-media-responsive";
+      $element['#attributes']['style'] = 'max-width:' . $element['content']['file']['#width'] . 'px;';
+      $element['#attributes']['width'] = "100%";
+      $element['#width'] = "100%";
+    }
+
+  }
 
 }
+
 
 //  ////////////////////////////////////////////////////////////////////////////
 //   END HOOKS N PATCHES
 //  ////////////////////////////////////////////////////////////////////////////
 
 
-
-
-
-
-/**
- * Implements hook_form_alter().
- */
-function stanford_mediaconfig_form_alter(&$form, &$form_state, $form_id) {
-
-
-  $whatshere = "nothing";
-
-}
 
 
