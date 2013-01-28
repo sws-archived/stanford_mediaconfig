@@ -47,13 +47,14 @@ function stanford_mediaconfig_enable() {
   // MEDIA BROWSER PLUS
   // ---------------------------------------------------------------------------
 
-
+  /* No special configuration needed yet */
 
 
   // MEDIA CROP
   // ---------------------------------------------------------------------------
 
-
+  /* Heavily patched module is available at: https://github.com/sherakama/media_crop */
+  /* Patches were submitted to the maintainers for inclusion into module. */
 
 
   // WYSIWYG
@@ -72,13 +73,22 @@ function stanford_mediaconfig_enable() {
   // MEDIA RESPONSIVE
   // ---------------------------------------------------------------------------
 
-
+  /* No configuration for this but a hack/patch below */
 
 
   // VIDEO + FitVids
   // ---------------------------------------------------------------------------
 
+  /* Seems to work out of the box for vimeo/youtube & Local minplayer. Yeah! */
 
+
+  // VIDEO + LOCAL HTML5 Player
+  // ---------------------------------------------------------------------------
+  // Order of video render super important. If the Vimeo/Youtube thubnails are
+  // ahead of any other player PHP will suffer a critical error.
+
+  // Set the display output of the file type 'video'
+  stanford_mediaconfig_set_video_file_display();
 
 
   // DEFAULT FOLDERS
@@ -86,11 +96,9 @@ function stanford_mediaconfig_enable() {
   stanford_mediaconfig_enable_folders();
 
 
-
   // USERS + Permissions
   // ---------------------------------------------------------------------------
-
-
+  stanford_mediaconfig_configure_user_permissions();
 
 
   drupal_flush_all_caches();
@@ -105,8 +113,6 @@ function stanford_mediaconfig_requirements($phase) {
   $req = array();
   $libraries = libraries_get_libraries();
 
-
-
   // Runtime and Installation Requirements.
   // Found at /admin/reports/status
   if ($phase == "runtime" || $phase == "install") {
@@ -114,18 +120,18 @@ function stanford_mediaconfig_requirements($phase) {
     // For using responsive videos.
     if (!isset($libraries['fitvids'])) {
       $req['fitvids'] = array(
-      "title" => t("FitVids Plugin"),
-      "value" => 'Missing Library Plugin: FitVids. Please ' . l('download it', 'https://github.com/davatron5000/FitVids.js', array('absolute'=>TRUE)) . ' and place it into sites/all/libraries',
-      "severity" => REQUIREMENT_ERROR,
+        "title" => t("FitVids Plugin"),
+        "value" => 'Missing Library Plugin: FitVids. Please ' . l(t('download it'), 'https://github.com/davatron5000/FitVids.js', array('absolute' => TRUE)) . ' and place it into sites/all/libraries',
+        "severity" => REQUIREMENT_ERROR,
       );
     }
 
     // For media crop module.
     if (!isset($libraries['jquery.imgareaselect'])) {
       $req['media_crop'] = array(
-      "title" => t("Missing Crop Plugin"),
-      "value" => 'Missing Library Plugin: jquery.imgareaselect. Please ' . l('download it', 'http://odyniec.net/projects/imgareaselect/jquery.imgareaselect-0.9.9.zip', array('absolute'=>TRUE)) . ' and place it into sites/all/libraries',
-      "severity" => REQUIREMENT_ERROR,
+        "title" => t("Missing Crop Plugin"),
+        "value" => 'Missing Library Plugin: jquery.imgareaselect. Please ' . l(t('download it'), 'http://odyniec.net/projects/imgareaselect/jquery.imgareaselect-0.9.9.zip', array('absolute' => TRUE)) . ' and place it into sites/all/libraries',
+        "severity" => REQUIREMENT_ERROR,
       );
     }
 
@@ -133,8 +139,6 @@ function stanford_mediaconfig_requirements($phase) {
 
   return $req;
 }
-
-
 
 
 /**
@@ -175,12 +179,12 @@ function stanford_mediaconfig_enable_wysiwyg() {
             ->fields('w')
             ->execute();
 
-            // Foreach of the profiles get the settings and add the filter
+  // Foreach of the profiles get the settings and add the filter
   while ($record = $profiles->fetchAssoc()) {
     $settings = unserialize($record['settings']);
     $filter = $record['format'];
 
-    // Check to see if the enabled markup is enabled on filter
+    // Check to see if the enabled markup is enabled on filter.
     $filters = db_select('filter', 'f')
             ->fields('f')
             ->condition('format', $filter)
@@ -189,7 +193,7 @@ function stanford_mediaconfig_enable_wysiwyg() {
             ->fetchAssoc();
 
     if (!is_array($filters)) {
-      // Add the convert to markup filter
+      // Add the convert to markup filter.
       $media_filter = array(
         'format'    => $filter,
         'module'    => 'media',
@@ -214,8 +218,6 @@ function stanford_mediaconfig_enable_wysiwyg() {
     );
     drupal_write_record('wysiwyg', $wys, array('format', 'editor'));
   }
-
-
 
 }
 
@@ -250,75 +252,74 @@ function stanford_mediaconfig_enable_folders() {
    * --- Streaming
    */
 
-  // Media folders vocabulary
+  // Media folders vocabulary.
   $vocabulary = taxonomy_vocabulary_machine_name_load('media_folders');
 
   // Media Root
-  // Leave alone for now
+  // Leave alone for now.
 
 
-  // Images
+  // Images.
   $term = new stdClass();
   $term->vid = $vocabulary->vid;
   $term->name = t("Images");
   $term->format = "filtered_html";
   taxonomy_term_save($term);
 
-    // Thumbnails
+    // Thumbnails.
     $term->name = t('Thumbnails');
     $term->parent = $term->tid;
     unset($term->tid);
     taxonomy_term_save($term);
 
-    // Icons
+    // Icons.
     $term->name = t('Icons');
     unset($term->tid);
     taxonomy_term_save($term);
 
-    // Banners
+    // Banners.
     $term->name = t('Banners');
     unset($term->tid);
     taxonomy_term_save($term);
 
-    // Blocks
+    // Blocks.
     $term->name = t('Blocks');
     unset($term->tid);
     taxonomy_term_save($term);
 
-  // Documents
+  // Documents.
   unset($term->parent);
   unset($term->tid);
   $term->name = t("Documents");
   $parent_term = taxonomy_term_save($term);
 
-    // Forms
+    // Forms.
     $term->parent = $term->tid;
     $term->name = t("Forms");
     unset($term->tid);
     taxonomy_term_save($term);
 
-    // PDF
+    // PDF.
     $term->name = t("PDF");
     unset($term->tid);
     taxonomy_term_save($term);
 
-    // Documents
+  // Video.
   unset($term->parent);
   unset($term->tid);
   $term->name = t("Video");
   $parent_term = taxonomy_term_save($term);
 
-    // YouTube
+    // YouTube.
     $term->parent = $term->tid;
     $term->name = t("YouTube");
     unset($term->tid);
     taxonomy_term_save($term);
 
-    // Vimeo
+    // Vimeo.
     $term->name = t("Vimeo");
     unset($term->tid);
     taxonomy_term_save($term);
-
 
   // Success!
   variable_set('stanford_mediaconfig_installed_folders', TRUE);
@@ -361,19 +362,16 @@ function stanford_mediaconfig_enable_filedisplay() {
   drupal_write_record('file_display', $formatter);
 
 
-  // Image Bundle + Field Instance Settings.
+  // Field Instance Settings.
   // ---------------------------------------------------------------------------
 
-  // $settings = variable_get('field_bundle_settings_file__image', array());
-  // variable_set('field_bundle_settings_file__image', $settings);
-
+  // Hide all extra fields on file entity types by default.
   $fields = db_select('field_config_instance', 'fci')
             ->fields('fci')
             ->condition('entity_type', 'file', '=')
-            ->condition('bundle', 'image', '=')
             ->execute();
 
-  // Set all fields to hidden by default on the default view mode
+  // Set all fields to hidden by default on the default view mode.
   while ($fs = $fields->fetchAssoc()) {
     $instance = field_info_instance($fs['entity_type'], $fs['field_name'], $fs['bundle']);
     foreach ($instance['display'] as $k => $v) {
@@ -443,17 +441,237 @@ function stanford_mediaconfig_enable_filedisplay() {
   // ---------------------------------------------------------------------------
 
 
-
-
   // File Type Streams Allowed for Audio
   // ---------------------------------------------------------------------------
 
 
+}
 
+/**
+ * Configures the file display for video files
+ * @return [type] [description]
+ */
+function stanford_mediaconfig_set_video_file_display() {
+
+  //
+  // DEFAULT VIEW MODE.
+  //
+
+  $displays_original = file_displays('video', 'preview');
+  $displays_original += file_displays('video', 'default');
+
+  // $displays['{viewmode}']['{formatter}'] = {a whole bunch of settings}
+  $displays['preview']['media_vimeo_image'] = file_display_new('video', 'preview', 'media_vimeo_image');
+  $displays['preview']['media_youtube_image'] = file_display_new('video', 'preview', 'media_youtube_image');
+  $displays['preview']['file_field_media_large_icon'] = file_display_new('video', 'preview', 'file_field_media_large_icon');
+
+  // Default Video.
+  $displays['default']['media_youtube_video'] = file_display_new('video', 'default', 'media_youtube_video');
+  $displays['default']['media_youtube_image'] = file_display_new('video', 'default', 'media_youtube_image');
+  $displays['default']['media_vimeo_video'] = file_display_new('video', 'default', 'media_vimeo_video');
+  $displays['default']['media_vimeo_image'] = file_display_new('video', 'default', 'media_vimeo_image');
+  $displays['default']['file_field_html5_player'] = file_display_new('video', 'default', 'file_field_html5_player');
+
+
+  // Save them all once.
+  foreach ($displays as $view_mode => $displayset) {
+    foreach ($displayset as $formatter => $display) {
+
+      $r = db_select('file_display', 'fd')
+        ->fields('fd')
+        ->condition('name', $display->name)
+        ->execute();
+
+      $count = $r->rowCount();
+      if ($count) {
+        continue;
+      }
+
+      file_display_save((object) $display);
+    }
+  }
+
+  $displays['default']['file_field_html5_player'] = array(
+    'status' => TRUE,
+    'weight' => "-38",
+    'name' => "video__default__file_field_html5_player",
+    'settings' => array(
+      'template' => "jqueryui",
+      'preload' => 1,
+      'autoplay' => 0,
+      'loop' => 0,
+      'width' => "100%",
+      'height' => '400px',
+      'volume' => '80',
+      'sources' => 0,
+      'debug' => 0,
+    ),
+    'table' => 'file_display',
+    'type' => 'Local',
+    'export_type' => 1,
+  );
+
+  $displays['default']['media_vimeo_image'] = array(
+    'status' => TRUE,
+    'weight' => "-40",
+    'name' => "video__default__media_vimeo_image",
+    'settings' => array(
+      'image_style' => 'large',
+    ),
+    'table' => 'file_display',
+    'type' => 'Overridden',
+    'export_type' => 3,
+    'export_module' => 'media_vimeo',
+  );
+
+  $displays['default']['media_vimeo_video'] = array(
+    'status' => TRUE,
+    'weight' => "-43",
+    'name' => "video__default__media_vimeo_video",
+    'settings' => array(
+      'width' => 640,
+      'height' => 390,
+      'color' => '',
+      'protocol' => "http://",
+      'autoplay' => 0,
+      'loop' => 0,
+      'title' => 1,
+      'byline' => 1,
+      'portrait' => 1,
+      'api' => 0,
+    ),
+    'table' => 'file_display',
+    'type' => 'Overridden',
+    'export_type' => 3,
+    'export_module' => "media_vimeo",
+  );
+
+  $displays['default']['media_youtube_image'] = array(
+    'status' => TRUE,
+    'weight' => "-39",
+    'name' => "video__default__media_youtube_image",
+    'settings' => array(
+      'image_style' => 'large',
+    ),
+    'table' => 'file_display',
+    'type' => 'Overridden',
+    'export_type' => 3,
+    'export_module' => 'media_youtube',
+  );
+
+  $displays['default']['media_youtube_video'] = array(
+    'status' => TRUE,
+    'weight' => "-44",
+    'name' => "video__default__media_youtube_video",
+    'settings' => array(
+      'width' => 640,
+      'height' => 390,
+      'theme' => 'dark',
+      'color' => 'red',
+      'protocol' => "https:",
+      'autoplay' => 0,
+      'loop' => 0,
+      'autohide' => "2",
+      'showinfo' => 1,
+      'modestbranding' => 0,
+      'rel' => 1,
+      'nocookie' => 0,
+      'protocol_specify' => 0,
+      'enablejsapi' => 0,
+      'origin' => "",
+    ),
+    'table' => 'file_display',
+    'type' => 'Overridden',
+    'export_type' => 3,
+    'export_module' => "media_youtube",
+  );
+
+
+  //
+  // PREVIEW VIEW MODE.
+  //
+
+  $displays['preview']['file_field_media_large_icon'] = array(
+    'status' => 1,
+    'weight' => "-50",
+    'name' => "video__preview__file_field_media_large_icon",
+    'settings' => NULL,
+    'table' => 'file_display',
+    'export_type' => 1,
+    'type' => 'Local'
+  );
+
+  $displays['preview']['media_youtube_image'] = array(
+    'status' => TRUE,
+    'weight' => "-42",
+    'name' => "video__preview__media_vimeo_image",
+    'settings' => array(
+      'image_style' => 'square_thumbnail',
+    ),
+    'table' => 'file_display',
+    'type' => 'Local',
+    'export_type' => 3,
+    'export_module' => 'media_vimeo',
+  );
+
+  $displays['preview']['media_vimeo_image'] = array(
+    'status' => TRUE,
+    'weight' => "-41",
+    'name' => "video__preview__media_youtube_image",
+    'settings' => array(
+      'image_style' => 'square_thumbnail',
+    ),
+    'table' => 'file_display',
+    'type' => 'Local',
+    'export_type' => 3,
+    'export_module' => 'media_youtube',
+  );
+
+  // Save them all twice.
+  foreach ($displays as $view_mode => $displayset) {
+    foreach ($displayset as $k => $display) {
+      file_display_save((object) $display);
+    }
+  }
 
 
 }
 
+/**
+ * Configure the permission settings for stanford roles
+ */
+function stanford_mediaconfig_configure_user_permissions() {
+
+  $perms = array(
+   // 'view_files' => 1,
+    'create files' => 1,
+    'filter media' => 1,
+    'upload media' => 1,
+    'preview media' => 1,
+    'download files' => 1,
+    'edit own files' => 1,
+    'view own files' => 1,
+    'media grid view' => 1,
+    'media list view' => 1,
+    'delete own files' => 1,
+    'access media backend' => 1,
+    'view own private files' => 1,
+    'add media from remote sources' => 1,
+  );
+
+  // STAFF ROLE.
+  $stanford_staff = user_role_load_by_name('Stanford Staff');
+  if (isset($stanford_staff)) {
+    user_role_change_permissions($stanford_staff->rid, $perms);
+  }
+
+  // FACULTY ROLE.
+  $stanford_faculty = user_role_load_by_name('Stanford Faculty');
+  if (isset($stanford_faculty)) {
+    user_role_change_permissions($stanford_faculty->rid, $perms);
+  }
+
+}
 
 //  ////////////////////////////////////////////////////////////////////////////
 //  HOOKS N PATCHES FOR INCOMPATIBIILTY ISSUES
@@ -469,35 +687,36 @@ function stanford_mediaconfig_entity_info_alter(&$entity_info) {
 }
 
 /**
- * [media_crop_media_token_to_markup_alter description]
+ * If media_responsive and media_crop both exist we need to create a patch
+ * between the two to work as they both override themeable output.
  * @param  [type] $element  [description]
  * @param  [type] $tag_info [description]
  * @param  [type] $settings [description]
  * @return [type]           [description]
  */
-function media_crop_media_token_to_markup_alter(&$element, $tag_info, $settings) {
+function stanford_mediaconfig_media_token_to_markup_alter(&$element, $tag_info, $settings) {
 
+  if (module_exists('media_responsive') && module_exists('media_crop')) {
 
+    if (isset($element['content']['file']['#style_name']) &&
+    $element['content']['file']['#style_name'] == "media_responsive_widest") {
+      $element['#attributes']['class'][] = "file-media-responsive";
+      $element['#attributes']['style'] = 'max-width:' . $element['content']['file']['#width'] . 'px;';
+      $element['#attributes']['width'] = "100%";
+      $element['#width'] = "100%";
+      unset($element['#attributes']['height']);
+      unset($element['height']);
+    }
+
+  }
 
 }
+
 
 //  ////////////////////////////////////////////////////////////////////////////
 //   END HOOKS N PATCHES
 //  ////////////////////////////////////////////////////////////////////////////
 
 
-
-
-
-
-/**
- * Implements hook_form_alter().
- */
-function stanford_mediaconfig_form_alter(&$form, &$form_state, $form_id) {
-
-
-  $whatshere = "nothing";
-
-}
 
 
