@@ -25,6 +25,22 @@ function stanford_mediaconfig_help($path, $arg) {
 
 
 /**
+ * Implements hook_menu().
+ */
+function stanford_mediaconfig_menu() {
+
+  $items['admin/config/stanford/mediaconfig'] = array(
+    'title' => 'Reset Media Configuration',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('stanford_mediaconfig_reset_form'),
+    'file' => 'stanford_mediaconfig.admin.inc',
+    'access arguments' => array('administer site configuration'),
+  );
+
+  return $items;
+}
+
+/**
  * Implements hook_enable().
  * This is just like an installation profile for this module. In here we will
  * tackle most of the installation tasks for this module.
@@ -101,6 +117,7 @@ function stanford_mediaconfig_enable() {
   stanford_mediaconfig_configure_user_permissions();
 
 
+  // Clear out caches
   drupal_flush_all_caches();
 }
 
