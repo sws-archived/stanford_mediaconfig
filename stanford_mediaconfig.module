@@ -47,8 +47,6 @@ function stanford_mediaconfig_enable() {
   // MEDIA BROWSER PLUS
   // ---------------------------------------------------------------------------
 
-  /* Seems to be working fine out of the box. */
-
 
   // MEDIA CROP
   // ---------------------------------------------------------------------------
@@ -79,7 +77,16 @@ function stanford_mediaconfig_enable() {
   // VIDEO + FitVids
   // ---------------------------------------------------------------------------
 
+  /* Seems to work out of the box for vimeo/youtube. Yeah! */
 
+
+  // VIDEO + LOCAL HTML5 Player
+  // ---------------------------------------------------------------------------
+  // Order of video render super important. If the Vimeo/Youtube thubnails are
+  // ahead of any other player PHP will suffer a critical error.
+
+  // Set the display output of the file type 'video'
+  stanford_mediaconfig_set_video_file_display();
 
 
   // DEFAULT FOLDERS
@@ -362,19 +369,16 @@ function stanford_mediaconfig_enable_filedisplay() {
   drupal_write_record('file_display', $formatter);
 
 
-  // Image Bundle + Field Instance Settings.
+  // Field Instance Settings.
   // ---------------------------------------------------------------------------
 
-  // $settings = variable_get('field_bundle_settings_file__image', array());
-  // variable_set('field_bundle_settings_file__image', $settings);
-
+  // Hide all extra fields on file entity types by default.
   $fields = db_select('field_config_instance', 'fci')
             ->fields('fci')
             ->condition('entity_type', 'file', '=')
-            ->condition('bundle', 'image', '=')
             ->execute();
 
-  // Set all fields to hidden by default on the default view mode
+  // Set all fields to hidden by default on the default view mode.
   while ($fs = $fields->fetchAssoc()) {
     $instance = field_info_instance($fs['entity_type'], $fs['field_name'], $fs['bundle']);
     foreach ($instance['display'] as $k => $v) {
@@ -444,13 +448,199 @@ function stanford_mediaconfig_enable_filedisplay() {
   // ---------------------------------------------------------------------------
 
 
-
-
   // File Type Streams Allowed for Audio
   // ---------------------------------------------------------------------------
 
 
+}
 
+/**
+ * Configures the file display for video files
+ * @return [type] [description]
+ */
+function stanford_mediaconfig_set_video_file_display() {
+
+  //
+  // DEFAULT VIEW MODE.
+  //
+
+  $displays_original = file_displays('video', 'preview');
+  $displays_original += file_displays('video', 'default');
+
+  // $displays['{viewmode}']['{formatter}'] = {a whole bunch of settings}
+  $displays['preview']['media_vimeo_image'] = file_display_new('video', 'preview', 'media_vimeo_image');
+  $displays['preview']['media_youtube_image'] = file_display_new('video', 'preview', 'media_youtube_image');
+  $displays['preview']['file_field_media_large_icon'] = file_display_new('video', 'preview', 'file_field_media_large_icon');
+
+  // Default Video.
+  $displays['default']['media_youtube_video'] = file_display_new('video', 'default', 'media_youtube_video');
+  $displays['default']['media_youtube_image'] = file_display_new('video', 'default', 'media_youtube_image');
+  $displays['default']['media_vimeo_video'] = file_display_new('video', 'default', 'media_vimeo_video');
+  $displays['default']['media_vimeo_image'] = file_display_new('video', 'default', 'media_vimeo_image');
+  $displays['default']['file_field_html5_player'] = file_display_new('video', 'default', 'file_field_html5_player');
+
+
+  // Save them all once.
+  foreach ($displays as $view_mode => $displayset) {
+    foreach ($displayset as $formatter => $display) {
+
+      $r = db_select('file_display', 'fd')
+        ->fields('fd')
+        ->condition('name', $display->name)
+        ->execute();
+
+      $count = $r->rowCount();
+      if ($count) {
+        continue;
+      }
+
+      file_display_save((object) $display);
+    }
+  }
+
+  $displays['default']['file_field_html5_player'] = array(
+    'status' => TRUE,
+    'weight' => "-38",
+    'name' => "video__default__file_field_html5_player",
+    'settings' => array(
+      'template' => "jqueryui",
+      'preload' => 1,
+      'autoplay' => 0,
+      'loop' => 0,
+      'width' => "100%",
+      'height' => '400px',
+      'volume' => '80',
+      'sources' => 0,
+      'debug' => 0,
+    ),
+    'table' => 'file_display',
+    'type' => 'Local',
+    'export_type' => 1,
+  );
+
+  $displays['default']['media_vimeo_image'] = array(
+    'status' => TRUE,
+    'weight' => "-40",
+    'name' => "video__default__media_vimeo_image",
+    'settings' => array(
+      'image_style' => 'large',
+    ),
+    'table' => 'file_display',
+    'type' => 'Overridden',
+    'export_type' => 3,
+    'export_module' => 'media_vimeo',
+  );
+
+  $displays['default']['media_vimeo_video'] = array(
+    'status' => TRUE,
+    'weight' => "-43",
+    'name' => "video__default__media_vimeo_video",
+    'settings' => array(
+      'width' => 640,
+      'height' => 390,
+      'color' => '',
+      'protocol' => "http://",
+      'autoplay' => 0,
+      'loop' => 0,
+      'title' => 1,
+      'byline' => 1,
+      'portrait' => 1,
+      'api' => 0,
+    ),
+    'table' => 'file_display',
+    'type' => 'Overridden',
+    'export_type' => 3,
+    'export_module' => "media_vimeo",
+  );
+
+  $displays['default']['media_youtube_image'] = array(
+    'status' => TRUE,
+    'weight' => "-39",
+    'name' => "video__default__media_youtube_image",
+    'settings' => array(
+      'image_style' => 'large',
+    ),
+    'table' => 'file_display',
+    'type' => 'Overridden',
+    'export_type' => 3,
+    'export_module' => 'media_youtube',
+  );
+
+  $displays['default']['media_youtube_video'] = array(
+    'status' => TRUE,
+    'weight' => "-44",
+    'name' => "video__default__media_youtube_video",
+    'settings' => array(
+      'width' => 640,
+      'height' => 390,
+      'theme' => 'dark',
+      'color' => 'red',
+      'protocol' => "https:",
+      'autoplay' => 0,
+      'loop' => 0,
+      'autohide' => "2",
+      'showinfo' => 1,
+      'modestbranding' => 0,
+      'rel' => 1,
+      'nocookie' => 0,
+      'protocol_specify' => 0,
+      'enablejsapi' => 0,
+      'origin' => "",
+    ),
+    'table' => 'file_display',
+    'type' => 'Overridden',
+    'export_type' => 3,
+    'export_module' => "media_youtube",
+  );
+
+
+  //
+  // PREVIEW VIEW MODE
+  //
+
+
+  $displays['preview']['file_field_media_large_icon'] = array(
+    'status' => 1,
+    'weight' => "-50",
+    'name' => "video__preview__file_field_media_large_icon",
+    'settings' => NULL,
+    'table' => 'file_display',
+    'export_type' => 1,
+    'type' => 'Local'
+  );
+
+  $displays['preview']['media_youtube_image'] = array(
+    'status' => TRUE,
+    'weight' => "-42",
+    'name' => "video__preview__media_vimeo_image",
+    'settings' => array(
+      'image_style' => 'square_thumbnail',
+    ),
+    'table' => 'file_display',
+    'type' => 'Local',
+    'export_type' => 3,
+    'export_module' => 'media_vimeo',
+  );
+
+  $displays['preview']['media_vimeo_image'] = array(
+    'status' => TRUE,
+    'weight' => "-41",
+    'name' => "video__preview__media_youtube_image",
+    'settings' => array(
+      'image_style' => 'square_thumbnail',
+    ),
+    'table' => 'file_display',
+    'type' => 'Local',
+    'export_type' => 3,
+    'export_module' => 'media_youtube',
+  );
+
+  // Save them all twice.
+  foreach ($displays as $view_mode => $displayset) {
+    foreach ($displayset as $k => $display) {
+      file_display_save((object) $display);
+    }
+  }
 
 
 }
@@ -487,6 +677,8 @@ function stanford_mediaconfig_media_token_to_markup_alter(&$element, $tag_info, 
       $element['#attributes']['style'] = 'max-width:' . $element['content']['file']['#width'] . 'px;';
       $element['#attributes']['width'] = "100%";
       $element['#width'] = "100%";
+      unset($element['#attributes']['height']);
+      unset($element['height']);
     }
 
   }

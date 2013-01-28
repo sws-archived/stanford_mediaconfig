@@ -11,6 +11,9 @@ function entityinfo() {
   var_dump($file_entity_info);
 }
 
+function vids() {
+  stanford_mediaconfig_set_video_file_display();
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
