@@ -47,6 +47,8 @@ function stanford_mediaconfig_enable() {
   // MEDIA BROWSER PLUS
   // ---------------------------------------------------------------------------
 
+  /* No special configuration needed yet */
+
 
   // MEDIA CROP
   // ---------------------------------------------------------------------------
@@ -77,7 +79,7 @@ function stanford_mediaconfig_enable() {
   // VIDEO + FitVids
   // ---------------------------------------------------------------------------
 
-  /* Seems to work out of the box for vimeo/youtube. Yeah! */
+  /* Seems to work out of the box for vimeo/youtube & Local minplayer. Yeah! */
 
 
   // VIDEO + LOCAL HTML5 Player
@@ -94,11 +96,9 @@ function stanford_mediaconfig_enable() {
   stanford_mediaconfig_enable_folders();
 
 
-
   // USERS + Permissions
   // ---------------------------------------------------------------------------
-
-
+  stanford_mediaconfig_configure_user_permissions();
 
 
   drupal_flush_all_caches();
@@ -113,8 +113,6 @@ function stanford_mediaconfig_requirements($phase) {
   $req = array();
   $libraries = libraries_get_libraries();
 
-
-
   // Runtime and Installation Requirements.
   // Found at /admin/reports/status
   if ($phase == "runtime" || $phase == "install") {
@@ -122,18 +120,18 @@ function stanford_mediaconfig_requirements($phase) {
     // For using responsive videos.
     if (!isset($libraries['fitvids'])) {
       $req['fitvids'] = array(
-      "title" => t("FitVids Plugin"),
-      "value" => 'Missing Library Plugin: FitVids. Please ' . l('download it', 'https://github.com/davatron5000/FitVids.js', array('absolute'=>TRUE)) . ' and place it into sites/all/libraries',
-      "severity" => REQUIREMENT_ERROR,
+        "title" => t("FitVids Plugin"),
+        "value" => 'Missing Library Plugin: FitVids. Please ' . l(t('download it'), 'https://github.com/davatron5000/FitVids.js', array('absolute' => TRUE)) . ' and place it into sites/all/libraries',
+        "severity" => REQUIREMENT_ERROR,
       );
     }
 
     // For media crop module.
     if (!isset($libraries['jquery.imgareaselect'])) {
       $req['media_crop'] = array(
-      "title" => t("Missing Crop Plugin"),
-      "value" => 'Missing Library Plugin: jquery.imgareaselect. Please ' . l('download it', 'http://odyniec.net/projects/imgareaselect/jquery.imgareaselect-0.9.9.zip', array('absolute'=>TRUE)) . ' and place it into sites/all/libraries',
-      "severity" => REQUIREMENT_ERROR,
+        "title" => t("Missing Crop Plugin"),
+        "value" => 'Missing Library Plugin: jquery.imgareaselect. Please ' . l(t('download it'), 'http://odyniec.net/projects/imgareaselect/jquery.imgareaselect-0.9.9.zip', array('absolute' => TRUE)) . ' and place it into sites/all/libraries',
+        "severity" => REQUIREMENT_ERROR,
       );
     }
 
@@ -141,8 +139,6 @@ function stanford_mediaconfig_requirements($phase) {
 
   return $req;
 }
-
-
 
 
 /**
@@ -183,12 +179,12 @@ function stanford_mediaconfig_enable_wysiwyg() {
             ->fields('w')
             ->execute();
 
-            // Foreach of the profiles get the settings and add the filter
+  // Foreach of the profiles get the settings and add the filter
   while ($record = $profiles->fetchAssoc()) {
     $settings = unserialize($record['settings']);
     $filter = $record['format'];
 
-    // Check to see if the enabled markup is enabled on filter
+    // Check to see if the enabled markup is enabled on filter.
     $filters = db_select('filter', 'f')
             ->fields('f')
             ->condition('format', $filter)
@@ -197,7 +193,7 @@ function stanford_mediaconfig_enable_wysiwyg() {
             ->fetchAssoc();
 
     if (!is_array($filters)) {
-      // Add the convert to markup filter
+      // Add the convert to markup filter.
       $media_filter = array(
         'format'    => $filter,
         'module'    => 'media',
@@ -222,8 +218,6 @@ function stanford_mediaconfig_enable_wysiwyg() {
     );
     drupal_write_record('wysiwyg', $wys, array('format', 'editor'));
   }
-
-
 
 }
 
@@ -258,75 +252,74 @@ function stanford_mediaconfig_enable_folders() {
    * --- Streaming
    */
 
-  // Media folders vocabulary
+  // Media folders vocabulary.
   $vocabulary = taxonomy_vocabulary_machine_name_load('media_folders');
 
   // Media Root
-  // Leave alone for now
+  // Leave alone for now.
 
 
-  // Images
+  // Images.
   $term = new stdClass();
   $term->vid = $vocabulary->vid;
   $term->name = t("Images");
   $term->format = "filtered_html";
   taxonomy_term_save($term);
 
-    // Thumbnails
+    // Thumbnails.
     $term->name = t('Thumbnails');
     $term->parent = $term->tid;
     unset($term->tid);
     taxonomy_term_save($term);
 
-    // Icons
+    // Icons.
     $term->name = t('Icons');
     unset($term->tid);
     taxonomy_term_save($term);
 
-    // Banners
+    // Banners.
     $term->name = t('Banners');
     unset($term->tid);
     taxonomy_term_save($term);
 
-    // Blocks
+    // Blocks.
     $term->name = t('Blocks');
     unset($term->tid);
     taxonomy_term_save($term);
 
-  // Documents
+  // Documents.
   unset($term->parent);
   unset($term->tid);
   $term->name = t("Documents");
   $parent_term = taxonomy_term_save($term);
 
-    // Forms
+    // Forms.
     $term->parent = $term->tid;
     $term->name = t("Forms");
     unset($term->tid);
     taxonomy_term_save($term);
 
-    // PDF
+    // PDF.
     $term->name = t("PDF");
     unset($term->tid);
     taxonomy_term_save($term);
 
-    // Documents
+  // Video.
   unset($term->parent);
   unset($term->tid);
   $term->name = t("Video");
   $parent_term = taxonomy_term_save($term);
 
-    // YouTube
+    // YouTube.
     $term->parent = $term->tid;
     $term->name = t("YouTube");
     unset($term->tid);
     taxonomy_term_save($term);
 
-    // Vimeo
+    // Vimeo.
     $term->name = t("Vimeo");
     unset($term->tid);
     taxonomy_term_save($term);
-
 
   // Success!
   variable_set('stanford_mediaconfig_installed_folders', TRUE);
@@ -595,9 +588,8 @@ function stanford_mediaconfig_set_video_file_display() {
 
 
   //
-  // PREVIEW VIEW MODE
+  // PREVIEW VIEW MODE.
   //
-
 
   $displays['preview']['file_field_media_large_icon'] = array(
     'status' => 1,
@@ -645,6 +637,41 @@ function stanford_mediaconfig_set_video_file_display() {
 
 }
 
+/**
+ * Configure the permission settings for stanford roles
+ */
+function stanford_mediaconfig_configure_user_permissions() {
+
+  $perms = array(
+   // 'view_files' => 1,
+    'create files' => 1,
+    'filter media' => 1,
+    'upload media' => 1,
+    'preview media' => 1,
+    'download files' => 1,
+    'edit own files' => 1,
+    'view own files' => 1,
+    'media grid view' => 1,
+    'media list view' => 1,
+    'delete own files' => 1,
+    'access media backend' => 1,
+    'view own private files' => 1,
+    'add media from remote sources' => 1,
+  );
+
+  // STAFF ROLE.
+  $stanford_staff = user_role_load_by_name('Stanford Staff');
+  if (isset($stanford_staff)) {
+    user_role_change_permissions($stanford_staff->rid, $perms);
+  }
+
+  // FACULTY ROLE.
+  $stanford_faculty = user_role_load_by_name('Stanford Faculty');
+  if (isset($stanford_faculty)) {
+    user_role_change_permissions($stanford_faculty->rid, $perms);
+  }
+
+}
 
 //  ////////////////////////////////////////////////////////////////////////////
 //  HOOKS N PATCHES FOR INCOMPATIBIILTY ISSUES
