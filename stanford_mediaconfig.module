@@ -730,10 +730,29 @@ function stanford_mediaconfig_media_token_to_markup_alter(&$element, $tag_info, 
 }
 
 
+/**
+ * Documents get weird links added to them in the media_thumbnail bits. Lets
+ * fix that for them.
+ * @param  [type] $variables [description]
+ * @return [type]            [description]
+ */
+function stanford_mediaconfig_preprocess_media_thumbnail(&$variables) {
+
+  if ($variables['element']['#file']->type == "document") {
+    $mime = $variables['element']['#file']->filemime;
+    $filename = str_replace("/", "-", $mime);
+    $new_html = theme('image', array(
+     'path' => base_path() . "modules/file/icons/" . $filename . ".png",
+     )
+    );
+
+    $variables['element']["#children"] = $new_html;
+  }
+
+}
+
+
 //  ////////////////////////////////////////////////////////////////////////////
 //   END HOOKS N PATCHES
 //  ////////////////////////////////////////////////////////////////////////////
-
-
-
 
