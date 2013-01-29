@@ -3,7 +3,7 @@ description = Provides configuration and customizations to the media module suit
 package = Stanford
 core = 7.x
 
-dependencies[] = media (7.x-2.x)
+dependencies[] = media (>=7.x-2.0-unstable7+20-dev)
 dependencies[] = media_browser_plus (>=1.0-beta3)
 dependencies[] = media_crop (>=7.x-1.4)
 dependencies[] = media_responsive (7.x-1.x)
