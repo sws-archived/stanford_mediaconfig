@@ -19,7 +19,6 @@ dependencies[] = html5_media (>=7.x-1.1-beta+0-dev)
 dependencies[] = mediafront (>=7.x-2.0)
 dependencies[] = minplayer
 
-
 files[] = stanford_mediaconfig.admin.inc
 files[] = stanford_mediaconfig.install
 
