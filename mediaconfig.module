@@ -86,11 +86,6 @@ function mediaconfig_enable() {
   mediaconfig_enable_folders();
 
 
-  // USERS + Permissions
-  // ---------------------------------------------------------------------------
-  mediaconfig_configure_user_permissions();
-
-
   drupal_flush_all_caches();
 }
 
