@@ -678,13 +678,13 @@ function stanford_mediaconfig_configure_user_permissions() {
 
   // STAFF ROLE.
   $stanford_staff = user_role_load_by_name('Stanford Staff');
-  if (isset($stanford_staff)) {
+  if ($stanford_staff) {
     user_role_change_permissions($stanford_staff->rid, $perms);
   }
 
   // FACULTY ROLE.
   $stanford_faculty = user_role_load_by_name('Stanford Faculty');
-  if (isset($stanford_faculty)) {
+  if ($stanford_faculty) {
     user_role_change_permissions($stanford_faculty->rid, $perms);
   }
 
