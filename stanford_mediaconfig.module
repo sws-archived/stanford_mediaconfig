@@ -127,7 +127,7 @@ function stanford_mediaconfig_enable() {
  * Implements hook_requirements().
  * Check to see if the cropping plugin is available
  */
-function stanford_mediaconfig_requirements($phase) {
+/* function stanford_mediaconfig_requirements($phase) {
 
   $req = array();
   $libraries = libraries_get_libraries();
@@ -153,11 +153,11 @@ function stanford_mediaconfig_requirements($phase) {
         "severity" => REQUIREMENT_ERROR,
       );
     }
-
   }
+  
 
   return $req;
-}
+}*/
 
 
 /**
