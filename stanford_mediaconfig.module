@@ -43,6 +43,10 @@ function stanford_mediaconfig_help($path, $arg) {
   }
 }
 
+function stanford_mediaconfig_disable() {
+  // TODO: perform required disable ops - perhaps reverse what has been done?
+}
+
 /**
  * Implements hook_enable().
  * This is just like an installation profile for this module. In here we will
@@ -122,43 +126,6 @@ function stanford_mediaconfig_enable() {
 
   drupal_flush_all_caches();
 }
-
-/**
- * Implements hook_requirements().
- * Check to see if the cropping plugin is available
- */
-/* function stanford_mediaconfig_requirements($phase) {
-
-  $req = array();
-  $libraries = libraries_get_libraries();
-
-  // Runtime and Installation Requirements.
-  // Found at /admin/reports/status
-  if ($phase == "runtime" || $phase == "install") {
-
-    // For using responsive videos.
-    if (!isset($libraries['fitvids'])) {
-      $req['fitvids'] = array(
-        "title" => t("FitVids Plugin"),
-        "value" => 'Missing Library Plugin: FitVids. Please ' . l(t('download it'), 'https://github.com/davatron5000/FitVids.js', array('absolute' => TRUE)) . ' and place it into sites/all/libraries',
-        "severity" => REQUIREMENT_ERROR,
-      );
-    }
-
-    // For media crop module.
-    if (!isset($libraries['jquery.imgareaselect'])) {
-      $req['media_crop'] = array(
-        "title" => t("Missing Crop Plugin"),
-        "value" => 'Missing Library Plugin: jquery.imgareaselect. Please ' . l(t('download it'), 'http://odyniec.net/projects/imgareaselect/jquery.imgareaselect-0.9.9.zip', array('absolute' => TRUE)) . ' and place it into sites/all/libraries',
-        "severity" => REQUIREMENT_ERROR,
-      );
-    }
-  }
-  
-
-  return $req;
-}*/
-
 
 /**
  * Enable WYSIWYG Settings and configuration.
