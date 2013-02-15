@@ -1,0 +1,13 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the "Stanford" Fitvids module.
+ */
+
+/**
+ * Uninstall the module
+ */
+function stanford_fitvids_uninstall() {
+  variable_del('stanford_fitvids_selectors');
+  variable_del('stanford_fitvids_customselectors');
+}

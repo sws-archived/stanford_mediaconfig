@@ -1,17 +1,37 @@
 <?php
-
 /**
  * @file
+ * Primarily used for global api functions and Drupal hook implementations.
+ * 
  * @author  Shea McKinney <shea@imagexmedia.com>
+ * @author  Aaron McGowan <aaron@imagexmedia.com>
  */
 
+/**
+ * Used for determine if the module is in development.
+ */
+define('STANFORD_MEDIA_IN_DEV', TRUE);
+
+/**
+ *
+ */
 define('STANFORD_MEDIA_UPLOAD_DIR', 'media');
 
 /**
- * TESTING PAGES
- * /admin/config/media/browser
+ * Checks whether or not we are currently in development mode.
+ *
+ * Uses the contant STANFORD_MEDIA_IN_DEV. If not defined, the current mode is
+ * not development. Development mode should be used at your own risk as it has
+ * special behaviors, some documented and some that are not.
+ *
+ * To enter the development mode, ensure that STANFORD_MEDIA_IN_DEV is defiend.
+ * 
+ * @return bool
+ *   Returns TRUE if the development mode is on, otherwise false.
  */
-
+function stanford_mediaconfig_mode_dev() {
+  return !defined('STANFORD_MEDIA_IN_DEV');
+}
 
 /**
  * Implements hook_help().
@@ -22,7 +42,6 @@ function stanford_mediaconfig_help($path, $arg) {
       return '<p>' . t('help@stanford.edu') . '</p>';
   }
 }
-
 
 /**
  * Implements hook_enable().
@@ -221,6 +240,10 @@ function stanford_mediaconfig_enable_wysiwyg() {
 
 }
 
+function stanford_mediaconfig_get_mediafolders_vocabulary_machine_name() {
+  return variable_get('stanford_mediaconfig_mediafolders_vocabulary_machine_name', 'media_folders');
+}
+
 
 /**
  * @hook_enable sub function.
@@ -228,10 +251,9 @@ function stanford_mediaconfig_enable_wysiwyg() {
  */
 
 function stanford_mediaconfig_enable_folders() {
-
   // We do not want to duplicate the folder on every enable. Just store it once.
   $one_run = variable_get('stanford_mediaconfig_installed_folders', FALSE);
-  if ($one_run) {
+  if ($one_run && !stanford_mediaconfig_mode_dev()) {
     return;
   }
 
@@ -253,11 +275,20 @@ function stanford_mediaconfig_enable_folders() {
    */
 
   // Media folders vocabulary.
-  $vocabulary = taxonomy_vocabulary_machine_name_load('media_folders');
+  $vocabulary = taxonomy_vocabulary_machine_name_load(stanford_mediaconfig_get_mediafolders_vocabulary_machine_name());
+  
+  // Vocabular does not appear to exist, create it.
+  if (FALSE === $vocabulary) {
+    taxonomy_vocabulary_save((object) array(
+      'name' => 'Media Root',
+      'machine_name' => stanford_mediaconfig_get_mediafolders_vocabulary_machine_name(),
+      'module' => 'stanford_mediaconfig'
+    ));
+    $vocabulary = taxonomy_vocabulary_machine_name_load(stanford_mediaconfig_get_mediafolders_vocabulary_machine_name());
+  }
 
   // Media Root
   // Leave alone for now.
-
 
   // Images.
   $term = new stdClass();
@@ -367,19 +398,29 @@ function stanford_mediaconfig_enable_filedisplay() {
 
   // Hide all extra fields on file entity types by default.
   $fields = db_select('field_config_instance', 'fci')
-            ->fields('fci')
-            ->condition('entity_type', 'file', '=')
-            ->execute();
+    ->fields('fci')
+    ->condition('entity_type', 'file', '=')
+    ->execute();
 
-  // Set all fields to hidden by default on the default view mode.
   while ($fs = $fields->fetchAssoc()) {
     $instance = field_info_instance($fs['entity_type'], $fs['field_name'], $fs['bundle']);
+    if (NULL === $instance) {
+      // Log that the instance does not exist and then move on.
+      watchdog('stanford_mediaconfig', 'The !entity of type !bundle does not have an instance for field !field', array(
+          '!entity' => $fs['entity_type'],
+          '!bundle' => $fs['bundle'],
+          '!field' => $fs['field_name'],
+        ),
+        WATCHDOG_DEBUG
+      );
+      continue;
+    }
+    
     foreach ($instance['display'] as $k => $v) {
       $instance['display'][$k]['type'] = "hidden";
     }
     field_update_instance($instance);
   }
-
 
   // File Type Streams Allowed for Images
   // ---------------------------------------------------------------------------
@@ -633,15 +674,12 @@ function stanford_mediaconfig_set_video_file_display() {
       file_display_save((object) $display);
     }
   }
-
-
 }
 
 /**
  * Configure the permission settings for stanford roles
  */
 function stanford_mediaconfig_configure_user_permissions() {
-
   $perms = array(
    // 'view_files' => 1,
     'create files' => 1,
@@ -658,19 +696,44 @@ function stanford_mediaconfig_configure_user_permissions() {
     'view own private files' => 1,
     'add media from remote sources' => 1,
   );
+  
+  // Attempt to load the staff role
+  $stanford_staff = user_role_load_by_name(stanford_mediaconfig_get_stanford_staff_user_role_name());
 
-  // STAFF ROLE.
-  $stanford_staff = user_role_load_by_name('Stanford Staff');
-  if (isset($stanford_staff)) {
-    user_role_change_permissions($stanford_staff->rid, $perms);
+  // If the staff role does not exist, create it.
+  if (FALSE === $stanford_staff) {
+    $stanford_staff = (object) array(
+      'name' => stanford_mediaconfig_get_stanford_staff_user_role_name(),
+    );
+    user_role_save($stanford_staff);
+    $stanford_staff = user_role_load_by_name(stanford_mediaconfig_get_stanford_staff_user_role_name());
   }
 
-  // FACULTY ROLE.
-  $stanford_faculty = user_role_load_by_name('Stanford Faculty');
-  if (isset($stanford_faculty)) {
-    user_role_change_permissions($stanford_faculty->rid, $perms);
+  // Update the staff role's permissions
+  user_role_change_permissions($stanford_staff->rid, $perms);
+
+  // Attempt to load the faculty role
+  $stanford_faculty = user_role_load_by_name(stanford_mediaconfig_get_stanford_faculty_user_role_name());
+
+  // If the faculty role does not exist, create it.
+  if (FALSE === $stanford_faculty) {
+    $stanford_faculty = (object) array(
+      'name' => stanford_mediaconfig_get_stanford_faculty_user_role_name(),
+    );
+    user_role_save($stanford_faculty);
+    $stanford_faculty = user_role_load_by_name(stanford_mediaconfig_get_stanford_faculty_user_role_name());
   }
 
+  // Update the faculty role's permissions
+  user_role_change_permissions($stanford_faculty->rid, $perms);
+}
+
+function stanford_mediaconfig_get_stanford_staff_user_role_name() {
+  return 'Stanford Staff';
+}
+
+function stanford_mediaconfig_get_stanford_faculty_user_role_name() {
+  return 'Stanford Faculty';
 }
 
 //  ////////////////////////////////////////////////////////////////////////////
@@ -718,5 +781,15 @@ function stanford_mediaconfig_media_token_to_markup_alter(&$element, $tag_info, 
 //  ////////////////////////////////////////////////////////////////////////////
 
 
+if (!function_exists('libraries_get_path')) {
+/**
+ *
+ *
+ */
+function libraries_get_path($library, $base_path = FALSE) {
+  
+}
+
+}
 
 
