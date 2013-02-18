@@ -48,6 +48,22 @@ function stanford_mediaconfig_disable() {
 }
 
 /**
+ * Implements hook_menu().
+ */
+function stanford_mediaconfig_menu() {
+
+  $items['admin/config/stanford/mediaconfig'] = array(
+    'title' => 'Reset Media Configuration',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('stanford_mediaconfig_reset_form'),
+    'file' => 'stanford_mediaconfig.admin.inc',
+    'access arguments' => array('administer site configuration'),
+  );
+
+  return $items;
+}
+
+/**
  * Implements hook_enable().
  * This is just like an installation profile for this module. In here we will
  * tackle most of the installation tasks for this module.
@@ -124,6 +140,7 @@ function stanford_mediaconfig_enable() {
   stanford_mediaconfig_configure_user_permissions();
 
 
+  // Clear out caches
   drupal_flush_all_caches();
 }
 
@@ -663,6 +680,7 @@ function stanford_mediaconfig_configure_user_permissions() {
     'view own private files' => 1,
     'add media from remote sources' => 1,
   );
+
   
   // Attempt to load the staff role
   $stanford_staff = user_role_load_by_name(stanford_mediaconfig_get_stanford_staff_user_role_name());
@@ -743,20 +761,28 @@ function stanford_mediaconfig_media_token_to_markup_alter(&$element, $tag_info, 
 }
 
 
+/**
+ * Documents get weird links added to them in the media_thumbnail bits. Lets
+ * fix that for them.
+ * @param  [type] $variables [description]
+ * @return [type]            [description]
+ */
+function stanford_mediaconfig_preprocess_media_thumbnail(&$variables) {
+
+  if ($variables['element']['#file']->type == "document") {
+    $mime = $variables['element']['#file']->filemime;
+    $filename = str_replace("/", "-", $mime);
+    $new_html = theme('image', array(
+     'path' => base_path() . "modules/file/icons/" . $filename . ".png",
+     )
+    );
+
+    $variables['element']["#children"] = $new_html;
+  }
+}
+
+
 //  ////////////////////////////////////////////////////////////////////////////
 //   END HOOKS N PATCHES
 //  ////////////////////////////////////////////////////////////////////////////
-
-
-if (!function_exists('libraries_get_path')) {
-/**
- *
- *
- */
-function libraries_get_path($library, $base_path = FALSE) {
-  
-}
-
-}
-
 
