@@ -19,9 +19,10 @@ define("STANFORD_FITVIDS_PLUGIN_FILENAME", 'jquery.fitvids.js');
  * @param arg
  *   Array that holds the current path as returned from arg() function
  */
-function fitvids_help($path, $arg) {
+function stanford_fitvids_help($path, $arg) {
   switch ($path) {
-    case "admin/help#fitvids":
+    case "admin/help#stanford_fitvids":
+      // TODO: Update the help information to include that this is an altered version of FitVids for Stanford.
       $output = '';
       $output .= '<h3>' . t('About') . '</h3>';
       $output .= '<p>' . t("FitVids is a jQuery plugin for fluid width video embeds.") . '</p>';
@@ -38,9 +39,9 @@ function fitvids_help($path, $arg) {
 /**
  * Implements hook_permission().
  */
-function fitvids_permission() {
+function stanford_fitvids_permission() {
   return array(
-    'administer fitvids' => array(
+    'administer stanford_fitvids' => array(
       'title' => t('Administer the FitVids module'),
     )
   );
@@ -49,15 +50,15 @@ function fitvids_permission() {
 /**
  * Implements hook_menu().
  */
-function fitvids_menu() {
+function stanford_fitvids_menu() {
   $items = array();
 
-  $items['admin/config/media/fitvids'] = array(
-    'title' => 'FitVids',
-    'description' => 'Configuration for FitVids module',
+  $items['admin/config/media/stanford_fitvids'] = array(
+    'title' => 'Stanford FitVids',
+    'description' => 'Configuration for Stanford FitVids module',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('fitvids_form'),
-    'access arguments' => array('administer fitvids'),
+    'page arguments' => array('stanford_fitvids_form'),
+    'access arguments' => array('administer stanford_fitvids'),
     'type' => MENU_NORMAL_ITEM,
   );
 
@@ -68,7 +69,7 @@ function fitvids_menu() {
  * Configuraton form, called by drupal_get_form()
  * in current_posts_menu().
  */
-function fitvids_form($form, &$form_state) {
+function stanford_fitvids_form($form, &$form_state) {
   $form['stanford_fitvids_intro'] = array(
     '#markup' => '<p>FitVids is a jQuery plugin for fluid width video embeds. It currently supports Vimeo,YouTube, Blip.tv, Viddler, Kickstarter.</p>',
   );
@@ -96,16 +97,13 @@ function fitvids_form($form, &$form_state) {
 /**
  * Include the FitVids.js script on every page
  */
-function fitvids_init() {
-
+function stanford_fitvids_init() {
   // Is the library installed?
   $path = drupal_get_path('module', 'stanford_fitvids') . '/js/jquery.fitvids.js';
   $installed = file_exists($path);
   if (!$installed) {
     return;
   }
-
-  // TODO User should be able to choose which paths this should/shouldn't run on
 
   // Add the library reference
   drupal_add_js($path, array(
@@ -136,7 +134,7 @@ function fitvids_init() {
   // Generate Drupal behaviour js
   $inline_code = '/* Output by FitVids module */' . PHP_EOL;
   $inline_code .= '(function ($) {
-    Drupal.behaviors.fitvids = {
+    Drupal.behaviors.stanfordFitVids = {
       attach: function (context, settings) {' . PHP_EOL;
       
   // TODO Remove these bits when Media stops adding the wrapper divs
@@ -159,7 +157,7 @@ function fitvids_init() {
   // Write out the fitVids selectors
   foreach ($fitvids_selectors_array as $selector) {
     $selector = trim($selector);
-    $inline_code .= '$("' . $selector . '", context).fitVids(' . $custom_selectors . ');' . PHP_EOL;
+    $inline_code .= '$("' . $selector . '", context).stanfordFitVids(' . $custom_selectors . ');' . PHP_EOL;
   }
 
   $inline_code .= '}
@@ -178,12 +176,12 @@ function fitvids_init() {
  * Implements hook_library().
  */
 function fitvids_library() {
-  $libraries['fitvids'] = array(
+  $libraries['stanford_fitvids'] = array(
     'title' => 'FitVids.js',
     'website' => 'https://github.com/davatron5000/FitVids.js',
     'version' => '1.0',
     'js' => array(
-      'jquery.fitvids.js' => array(),
+      'jquery.stanfordfitvids.js' => array(),
     ),
   );
   return $libraries;
