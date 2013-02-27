@@ -65,79 +65,16 @@ function stanford_mediaconfig_menu() {
  * tackle most of the installation tasks for this module.
  */
 function stanford_mediaconfig_enable() {
-
-
-  // MEDIA
-  // ---------------------------------------------------------------------------
-
   variable_set('media_root_folder', STANFORD_MEDIA_UPLOAD_DIR);
   variable_set('media__dialog_theme', 'seven');
   variable_set('image_jpeg_quality', 95);
 
-  // FILE + ENTITIY DISPLAY SETTINGS
-  // ---------------------------------------------------------------------------
   stanford_mediaconfig_enable_filedisplay();
+  stanford_mediaconfig_enable_wysiwyg();
+  // stanford_mediaconfig_set_video_file_display();
 
-
-  // MEDIA BROWSER PLUS
-  // ---------------------------------------------------------------------------
-
-  /* No special configuration needed yet */
-
-
-  // MEDIA CROP
-  // ---------------------------------------------------------------------------
-
-  /* Heavily patched module is available at: https://github.com/sherakama/media_crop */
-  /* Patches were submitted to the maintainers for inclusion into module. */
-
-
-  // WYSIWYG
-  // ---------------------------------------------------------------------------
-
-  if (module_exists('wysiwyg')) {
-    stanford_mediaconfig_enable_wysiwyg();
-  }
-  else {
-    // This should never get here as it is in the dependencies but there have
-    // been cases where this may have errored during install.
-    drupal_set_message('ERROR: MISSING WYSIWYG MODULE', 'error');
-  }
-
-
-  // MEDIA RESPONSIVE
-  // ---------------------------------------------------------------------------
-
-  /* No configuration for this but a hack/patch below */
-
-
-  // VIDEO + FitVids
-  // ---------------------------------------------------------------------------
-
-  /* Seems to work out of the box for vimeo/youtube & Local minplayer. Yeah! */
-
-
-  // VIDEO + LOCAL HTML5 Player
-  // ---------------------------------------------------------------------------
-  // Order of video render super important. If the Vimeo/Youtube thubnails are
-  // ahead of any other player PHP will suffer a critical error.
-
-  // Set the display output of the file type 'video'
-  stanford_mediaconfig_set_video_file_display();
-
-
-  // DEFAULT FOLDERS
-  // ---------------------------------------------------------------------------
-  // stanford_mediaconfig_enable_folders();
   stanford_mediaconfig_create_taxonomy_structure();
-
-
-  // USERS + Permissions
-  // ---------------------------------------------------------------------------
   stanford_mediaconfig_configure_user_permissions();
-
-
-  // Clear out caches
   drupal_flush_all_caches();
 }
 
@@ -227,7 +164,6 @@ function stanford_mediaconfig_enable_wysiwyg() {
     );
     drupal_write_record('wysiwyg', $wys, array('format', 'editor'));
   }
-
 }
 
 function stanford_mediaconfig_get_mediafolders_vocabulary_machine_name() {
@@ -754,7 +690,7 @@ function stanford_mediaconfig_entity_info_alter(&$entity_info) {
  * @return [type]           [description]
  */
 function stanford_mediaconfig_media_token_to_markup_alter(&$element, $tag_info, $settings) {
-  if (module_exists('media_responsive') && module_exists('media_crop')) {
+  if (module_exists('media_responsive') && module_exists('stanford_media_crop')) {
     if (isset($element['content']['file']['#style_name']) &&
     $element['content']['file']['#style_name'] == "media_responsive_widest") {
       $element['#attributes']['class'][] = "file-media-responsive";
