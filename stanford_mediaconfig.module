@@ -665,6 +665,12 @@ function stanford_mediaconfig_set_video_file_display() {
   }
 }
 
+/**
+ * Returns an array of permissions to grant to roles.
+ *
+ * @return array
+ *   Returns an array of permissions, some valid some are not.
+ */
 function stanford_mediaconfig_get_permissions() {
   return array(
    // 'view_files',
@@ -685,9 +691,10 @@ function stanford_mediaconfig_get_permissions() {
 }
 
 /**
- * Configure the permission settings for stanford roles
+ * Configure the permission settings for stanford roles.
  */
 function stanford_mediaconfig_configure_user_permissions() {
+  // Create an array of valid and existing permissions
   $modules = user_permission_get_modules();
   $permissions = array();
   foreach (stanford_mediaconfig_get_permissions() as $permission) {
@@ -747,9 +754,7 @@ function stanford_mediaconfig_entity_info_alter(&$entity_info) {
  * @return [type]           [description]
  */
 function stanford_mediaconfig_media_token_to_markup_alter(&$element, $tag_info, $settings) {
-
   if (module_exists('media_responsive') && module_exists('media_crop')) {
-
     if (isset($element['content']['file']['#style_name']) &&
     $element['content']['file']['#style_name'] == "media_responsive_widest") {
       $element['#attributes']['class'][] = "file-media-responsive";
@@ -759,9 +764,7 @@ function stanford_mediaconfig_media_token_to_markup_alter(&$element, $tag_info, 
       unset($element['#attributes']['height']);
       unset($element['height']);
     }
-
   }
-
 }
 
 
