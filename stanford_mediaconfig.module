@@ -43,10 +43,6 @@ function stanford_mediaconfig_help($path, $arg) {
   }
 }
 
-function stanford_mediaconfig_disable() {
-  // TODO: perform required disable ops - perhaps reverse what has been done?
-}
-
 /**
  * Implements hook_menu().
  */
@@ -132,7 +128,8 @@ function stanford_mediaconfig_enable() {
 
   // DEFAULT FOLDERS
   // ---------------------------------------------------------------------------
-  stanford_mediaconfig_enable_folders();
+  // stanford_mediaconfig_enable_folders();
+  stanford_mediaconfig_create_taxonomy_structure();
 
 
   // USERS + Permissions
@@ -142,6 +139,15 @@ function stanford_mediaconfig_enable() {
 
   // Clear out caches
   drupal_flush_all_caches();
+}
+
+/**
+ * Implements hook_disable().
+ */
+function stanford_mediaconfig_disable() {
+  if (stanford_mediaconfig_mode_dev()) {
+    stanford_mediaconfig_remove_taxonomy_structure();
+  }
 }
 
 /**
@@ -228,117 +234,116 @@ function stanford_mediaconfig_get_mediafolders_vocabulary_machine_name() {
   return variable_get('stanford_mediaconfig_mediafolders_vocabulary_machine_name', 'media_folders');
 }
 
+function stanford_mediaconfig_default_taxonomy_terms() {
+  return array(
+    stanford_mediaconfig_get_mediafolders_vocabulary_machine_name() => array(
+      'name' => t('Media Root'),
+      'module' => 'stanford_mediaconfig',
+      'terms' => array(
+        array(
+          'name' => t('Images'),
+          'format' => 'filtered_html',
+          'children' => array(
+            array(
+              'name' => t('Thumbnails')
+            ),
+            array(
+              'name' => t('Icons')
+            ),
+            array(
+              'name' => t('Banners')
+            ),
+            array(
+              'name' => t('Blocks')
+            )
+          )
+        ),
+        array(
+          'name' => t('Documents'),
+          'children' => array(
+            array(
+              'name' => t('Forms'),
+            ),
+            array(
+              'name' => t('PDF')
+            )
+          )
+        ),
+        array(
+          'name' => t('Video'),
+          'children' => array(
+            array(
+              'name' => t('YouTube')
+            ),
+            array(
+              'name' => t('Vimeo')
+            ),
+            array(
+              'name' => t('Streaming')
+            )
+          )
+        )
+      )
+    )
+  );
+}
+
 
 /**
  * @hook_enable sub function.
  * Create default folders for the media library to keep stuff organized
  */
 
-function stanford_mediaconfig_enable_folders() {
-  // We do not want to duplicate the folder on every enable. Just store it once.
-  $one_run = variable_get('stanford_mediaconfig_installed_folders', FALSE);
-  if ($one_run && !stanford_mediaconfig_mode_dev()) {
+function _stanford_mediaiconfig_create_taxonomy_terms($vocabulary, array $terms = array(), $parent = NULL) {
+  foreach ($terms as $info) {
+    $term = (object) array(
+      'name' => $info['name'],
+      'vid' => $vocabulary->vid,
+      'format' => isset($info['format']) ? $info['format'] : 'filtered_html'
+    );
+    
+    if (NULL !== $parent) {
+      $term->parent = $parent->tid;
+    }
+    
+    taxonomy_term_save($term);
+    
+    if (isset($info['children'])) {
+      _stanford_mediaiconfig_create_taxonomy_terms($vocabulary, $info['children'], $term);
+    }
+  }
+}
+
+function stanford_mediaconfig_create_taxonomy_structure() {
+  $has_ran = variable_get('stanford_mediaconfig_installed_folders', FALSE);
+  if ($has_ran && !stanford_mediaconfig_mode_dev()) {
     return;
   }
 
-  /**
-   * Set up the media browser library folders like this.
-   * -- Media Root
-   * -- Images
-   * --- Thumbnails
-   * --- Icons
-   * --- Banners
-   * --- Blocks
-   * -- Documents
-   * --- Forms
-   * --- PDF
-   * -- Video
-   * --- YouTube
-   * --- Vimeo
-   * --- Streaming
-   */
-
-  // Media folders vocabulary.
-  $vocabulary = taxonomy_vocabulary_machine_name_load(stanford_mediaconfig_get_mediafolders_vocabulary_machine_name());
-  
-  // Vocabular does not appear to exist, create it.
-  if (FALSE === $vocabulary) {
-    taxonomy_vocabulary_save((object) array(
-      'name' => 'Media Root',
-      'machine_name' => stanford_mediaconfig_get_mediafolders_vocabulary_machine_name(),
-      'module' => 'stanford_mediaconfig'
-    ));
-    $vocabulary = taxonomy_vocabulary_machine_name_load(stanford_mediaconfig_get_mediafolders_vocabulary_machine_name());
+  foreach (stanford_mediaconfig_default_taxonomy_terms() as $machine_name => $info) {
+    $vocabulary = taxonomy_vocabulary_machine_name_load($machine_name);
+    if (FALSE === $vocabulary) {
+      taxonomy_vocabulary_save((object) array(
+        'name' => $info['name'],
+        'machine_name' => $machine_name,
+        'module' => $info['module']
+      ));
+      $vocabulary = taxonomy_vocabulary_machine_name_load($machine_name);
+    }
+    
+    if (!empty($info['terms'])) {
+      _stanford_mediaiconfig_create_taxonomy_terms($vocabulary, $info['terms']);
+    }
   }
 
-  // Media Root
-  // Leave alone for now.
-
-  // Images.
-  $term = new stdClass();
-  $term->vid = $vocabulary->vid;
-  $term->name = t("Images");
-  $term->format = "filtered_html";
-  taxonomy_term_save($term);
-
-    // Thumbnails.
-    $term->name = t('Thumbnails');
-    $term->parent = $term->tid;
-    unset($term->tid);
-    taxonomy_term_save($term);
-
-    // Icons.
-    $term->name = t('Icons');
-    unset($term->tid);
-    taxonomy_term_save($term);
-
-    // Banners.
-    $term->name = t('Banners');
-    unset($term->tid);
-    taxonomy_term_save($term);
-
-    // Blocks.
-    $term->name = t('Blocks');
-    unset($term->tid);
-    taxonomy_term_save($term);
-
-  // Documents.
-  unset($term->parent);
-  unset($term->tid);
-  $term->name = t("Documents");
-  $parent_term = taxonomy_term_save($term);
-
-    // Forms.
-    $term->parent = $term->tid;
-    $term->name = t("Forms");
-    unset($term->tid);
-    taxonomy_term_save($term);
-
-    // PDF.
-    $term->name = t("PDF");
-    unset($term->tid);
-    taxonomy_term_save($term);
-
-  // Video.
-  unset($term->parent);
-  unset($term->tid);
-  $term->name = t("Video");
-  $parent_term = taxonomy_term_save($term);
-
-    // YouTube.
-    $term->parent = $term->tid;
-    $term->name = t("YouTube");
-    unset($term->tid);
-    taxonomy_term_save($term);
-
-    // Vimeo.
-    $term->name = t("Vimeo");
-    unset($term->tid);
-    taxonomy_term_save($term);
-
-  // Success!
   variable_set('stanford_mediaconfig_installed_folders', TRUE);
+}
 
+function stanford_mediaconfig_remove_taxonomy_structure() {
+  foreach (stanford_mediaconfig_default_taxonomy_terms() as $machine_name => $info) {
+    $vocabulary = taxonomy_vocabulary_machine_name_load($machine_name);
+    taxonomy_vocabulary_delete($vocabulary->vid);
+  }
 }
 
 
@@ -660,63 +665,62 @@ function stanford_mediaconfig_set_video_file_display() {
   }
 }
 
+function stanford_mediaconfig_get_permissions() {
+  return array(
+   // 'view_files',
+    'create files',
+    'filter media',
+    'upload media',
+    'preview media',
+    'download files',
+    'edit own files',
+    'view own files',
+    'media grid view',
+    'media list view',
+    'delete own files',
+    'access media backend',
+    'view own private files',
+    'add media from remote sources',
+  );
+}
+
 /**
  * Configure the permission settings for stanford roles
  */
 function stanford_mediaconfig_configure_user_permissions() {
-  $perms = array(
-   // 'view_files' => 1,
-    'create files' => 1,
-    'filter media' => 1,
-    'upload media' => 1,
-    'preview media' => 1,
-    'download files' => 1,
-    'edit own files' => 1,
-    'view own files' => 1,
-    'media grid view' => 1,
-    'media list view' => 1,
-    'delete own files' => 1,
-    'access media backend' => 1,
-    'view own private files' => 1,
-    'add media from remote sources' => 1,
-  );
-
-  
-  // Attempt to load the staff role
-  $stanford_staff = user_role_load_by_name(stanford_mediaconfig_get_stanford_staff_user_role_name());
-
-  // If the staff role does not exist, create it.
-  if (FALSE === $stanford_staff) {
-    $stanford_staff = (object) array(
-      'name' => stanford_mediaconfig_get_stanford_staff_user_role_name(),
-    );
-    user_role_save($stanford_staff);
-    $stanford_staff = user_role_load_by_name(stanford_mediaconfig_get_stanford_staff_user_role_name());
+  $modules = user_permission_get_modules();
+  $permissions = array();
+  foreach (stanford_mediaconfig_get_permissions() as $permission) {
+    if (isset($modules[$permission])) {
+      $permissions[] = $permission;
+    }
   }
 
-  // Update the staff role's permissions
-  user_role_change_permissions($stanford_staff->rid, $perms);
-
-  // Attempt to load the faculty role
-  $stanford_faculty = user_role_load_by_name(stanford_mediaconfig_get_stanford_faculty_user_role_name());
-
-  // If the faculty role does not exist, create it.
-  if (FALSE === $stanford_faculty) {
-    $stanford_faculty = (object) array(
-      'name' => stanford_mediaconfig_get_stanford_faculty_user_role_name(),
-    );
-    user_role_save($stanford_faculty);
-    $stanford_faculty = user_role_load_by_name(stanford_mediaconfig_get_stanford_faculty_user_role_name());
+  if (FALSE !== ($stanford_staff = user_role_load_by_name(stanford_mediaconfig_get_stanford_staff_user_role_name()))) {
+    user_role_grant_permissions($stanford_staff->rid, $permissions);
   }
 
-  // Update the faculty role's permissions
-  user_role_change_permissions($stanford_faculty->rid, $perms);
+  if (FALSE !== ($stanford_faculty = user_role_load_by_name(stanford_mediaconfig_get_stanford_faculty_user_role_name()))) {
+    user_role_grant_permissions($stanford_faculty->rid, $permissions);
+  }
 }
 
+/**
+ * Returns the name of the stanford staff user role.
+ *
+ * @return string
+ *   Returns the name of the staff user role.
+ */
 function stanford_mediaconfig_get_stanford_staff_user_role_name() {
   return 'Stanford Staff';
 }
 
+/**
+ * Returns the name of the stanford faculty user role.
+ *
+ * @return string
+ *   Returns the name of the faculty user role.
+ */
 function stanford_mediaconfig_get_stanford_faculty_user_role_name() {
   return 'Stanford Faculty';
 }
