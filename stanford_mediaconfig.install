@@ -4,17 +4,10 @@
  * Implements hook_install().
  */
 function stanford_mediaconfig_install() {
-
-
 }
-
 
 /**
  * Implements hook_uninstall().
  */
 function stanford_mediaconfig_uninstall() {
-
-
 }
-
-

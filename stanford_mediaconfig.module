@@ -1,17 +1,37 @@
 <?php
-
 /**
  * @file
+ * Primarily used for global api functions and Drupal hook implementations.
+ * 
  * @author  Shea McKinney <shea@imagexmedia.com>
+ * @author  Aaron McGowan <aaron@imagexmedia.com>
  */
 
+/**
+ * Used for determine if the module is in development.
+ */
+define('STANFORD_MEDIA_IN_DEV', TRUE);
+
+/**
+ *
+ */
 define('STANFORD_MEDIA_UPLOAD_DIR', 'media');
 
 /**
- * TESTING PAGES
- * /admin/config/media/browser
+ * Checks whether or not we are currently in development mode.
+ *
+ * Uses the contant STANFORD_MEDIA_IN_DEV. If not defined, the current mode is
+ * not development. Development mode should be used at your own risk as it has
+ * special behaviors, some documented and some that are not.
+ *
+ * To enter the development mode, ensure that STANFORD_MEDIA_IN_DEV is defiend.
+ * 
+ * @return bool
+ *   Returns TRUE if the development mode is on, otherwise false.
  */
-
+function stanford_mediaconfig_mode_dev() {
+  return !defined('STANFORD_MEDIA_IN_DEV');
+}
 
 /**
  * Implements hook_help().
@@ -22,7 +42,6 @@ function stanford_mediaconfig_help($path, $arg) {
       return '<p>' . t('help@stanford.edu') . '</p>';
   }
 }
-
 
 /**
  * Implements hook_menu().
@@ -46,117 +65,27 @@ function stanford_mediaconfig_menu() {
  * tackle most of the installation tasks for this module.
  */
 function stanford_mediaconfig_enable() {
-
-
-  // MEDIA
-  // ---------------------------------------------------------------------------
-
   variable_set('media_root_folder', STANFORD_MEDIA_UPLOAD_DIR);
   variable_set('media__dialog_theme', 'seven');
   variable_set('image_jpeg_quality', 95);
 
-  // FILE + ENTITIY DISPLAY SETTINGS
-  // ---------------------------------------------------------------------------
   stanford_mediaconfig_enable_filedisplay();
+  stanford_mediaconfig_enable_wysiwyg();
+  // stanford_mediaconfig_set_video_file_display();
 
-
-  // MEDIA BROWSER PLUS
-  // ---------------------------------------------------------------------------
-
-  /* No special configuration needed yet */
-
-
-  // MEDIA CROP
-  // ---------------------------------------------------------------------------
-
-  /* Heavily patched module is available at: https://github.com/sherakama/media_crop */
-  /* Patches were submitted to the maintainers for inclusion into module. */
-
-
-  // WYSIWYG
-  // ---------------------------------------------------------------------------
-
-  if (module_exists('wysiwyg')) {
-    stanford_mediaconfig_enable_wysiwyg();
-  }
-  else {
-    // This should never get here as it is in the dependencies but there have
-    // been cases where this may have errored during install.
-    drupal_set_message('ERROR: MISSING WYSIWYG MODULE', 'error');
-  }
-
-
-  // MEDIA RESPONSIVE
-  // ---------------------------------------------------------------------------
-
-  /* No configuration for this but a hack/patch below */
-
-
-  // VIDEO + FitVids
-  // ---------------------------------------------------------------------------
-
-  /* Seems to work out of the box for vimeo/youtube & Local minplayer. Yeah! */
-
-
-  // VIDEO + LOCAL HTML5 Player
-  // ---------------------------------------------------------------------------
-  // Order of video render super important. If the Vimeo/Youtube thubnails are
-  // ahead of any other player PHP will suffer a critical error.
-
-  // Set the display output of the file type 'video'
-  stanford_mediaconfig_set_video_file_display();
-
-
-  // DEFAULT FOLDERS
-  // ---------------------------------------------------------------------------
-  stanford_mediaconfig_enable_folders();
-
-
-  // USERS + Permissions
-  // ---------------------------------------------------------------------------
+  stanford_mediaconfig_create_taxonomy_structure();
   stanford_mediaconfig_configure_user_permissions();
-
-
-  // Clear out caches
   drupal_flush_all_caches();
 }
 
 /**
- * Implements hook_requirements().
- * Check to see if the cropping plugin is available
+ * Implements hook_disable().
  */
-function stanford_mediaconfig_requirements($phase) {
-
-  $req = array();
-  $libraries = libraries_get_libraries();
-
-  // Runtime and Installation Requirements.
-  // Found at /admin/reports/status
-  if ($phase == "runtime" || $phase == "install") {
-
-    // For using responsive videos.
-    if (!isset($libraries['fitvids'])) {
-      $req['fitvids'] = array(
-        "title" => t("FitVids Plugin"),
-        "value" => 'Missing Library Plugin: FitVids. Please ' . l(t('download it'), 'https://github.com/davatron5000/FitVids.js', array('absolute' => TRUE)) . ' and place it into sites/all/libraries',
-        "severity" => REQUIREMENT_ERROR,
-      );
-    }
-
-    // For media crop module.
-    if (!isset($libraries['jquery.imgareaselect'])) {
-      $req['media_crop'] = array(
-        "title" => t("Missing Crop Plugin"),
-        "value" => 'Missing Library Plugin: jquery.imgareaselect. Please ' . l(t('download it'), 'http://odyniec.net/projects/imgareaselect/jquery.imgareaselect-0.9.9.zip', array('absolute' => TRUE)) . ' and place it into sites/all/libraries',
-        "severity" => REQUIREMENT_ERROR,
-      );
-    }
-
+function stanford_mediaconfig_disable() {
+  if (stanford_mediaconfig_mode_dev()) {
+    stanford_mediaconfig_remove_taxonomy_structure();
   }
-
-  return $req;
 }
-
 
 /**
  * Enable WYSIWYG Settings and configuration.
@@ -235,7 +164,64 @@ function stanford_mediaconfig_enable_wysiwyg() {
     );
     drupal_write_record('wysiwyg', $wys, array('format', 'editor'));
   }
+}
 
+function stanford_mediaconfig_get_mediafolders_vocabulary_machine_name() {
+  return variable_get('stanford_mediaconfig_mediafolders_vocabulary_machine_name', 'media_folders');
+}
+
+function stanford_mediaconfig_default_taxonomy_terms() {
+  return array(
+    stanford_mediaconfig_get_mediafolders_vocabulary_machine_name() => array(
+      'name' => t('Media Root'),
+      'module' => 'stanford_mediaconfig',
+      'terms' => array(
+        array(
+          'name' => t('Images'),
+          'format' => 'filtered_html',
+          'children' => array(
+            array(
+              'name' => t('Thumbnails')
+            ),
+            array(
+              'name' => t('Icons')
+            ),
+            array(
+              'name' => t('Banners')
+            ),
+            array(
+              'name' => t('Blocks')
+            )
+          )
+        ),
+        array(
+          'name' => t('Documents'),
+          'children' => array(
+            array(
+              'name' => t('Forms'),
+            ),
+            array(
+              'name' => t('PDF')
+            )
+          )
+        ),
+        array(
+          'name' => t('Video'),
+          'children' => array(
+            array(
+              'name' => t('YouTube')
+            ),
+            array(
+              'name' => t('Vimeo')
+            ),
+            array(
+              'name' => t('Streaming')
+            )
+          )
+        )
+      )
+    )
+  );
 }
 
 
@@ -244,103 +230,56 @@ function stanford_mediaconfig_enable_wysiwyg() {
  * Create default folders for the media library to keep stuff organized
  */
 
-function stanford_mediaconfig_enable_folders() {
+function _stanford_mediaiconfig_create_taxonomy_terms($vocabulary, array $terms = array(), $parent = NULL) {
+  foreach ($terms as $info) {
+    $term = (object) array(
+      'name' => $info['name'],
+      'vid' => $vocabulary->vid,
+      'format' => isset($info['format']) ? $info['format'] : 'filtered_html'
+    );
+    
+    if (NULL !== $parent) {
+      $term->parent = $parent->tid;
+    }
+    
+    taxonomy_term_save($term);
+    
+    if (isset($info['children'])) {
+      _stanford_mediaiconfig_create_taxonomy_terms($vocabulary, $info['children'], $term);
+    }
+  }
+}
 
-  // We do not want to duplicate the folder on every enable. Just store it once.
-  $one_run = variable_get('stanford_mediaconfig_installed_folders', FALSE);
-  if ($one_run) {
+function stanford_mediaconfig_create_taxonomy_structure() {
+  $has_ran = variable_get('stanford_mediaconfig_installed_folders', FALSE);
+  if ($has_ran && !stanford_mediaconfig_mode_dev()) {
     return;
   }
 
-  /**
-   * Set up the media browser library folders like this.
-   * -- Media Root
-   * -- Images
-   * --- Thumbnails
-   * --- Icons
-   * --- Banners
-   * --- Blocks
-   * -- Documents
-   * --- Forms
-   * --- PDF
-   * -- Video
-   * --- YouTube
-   * --- Vimeo
-   * --- Streaming
-   */
+  foreach (stanford_mediaconfig_default_taxonomy_terms() as $machine_name => $info) {
+    $vocabulary = taxonomy_vocabulary_machine_name_load($machine_name);
+    if (FALSE === $vocabulary) {
+      taxonomy_vocabulary_save((object) array(
+        'name' => $info['name'],
+        'machine_name' => $machine_name,
+        'module' => $info['module']
+      ));
+      $vocabulary = taxonomy_vocabulary_machine_name_load($machine_name);
+    }
+    
+    if (!empty($info['terms'])) {
+      _stanford_mediaiconfig_create_taxonomy_terms($vocabulary, $info['terms']);
+    }
+  }
 
-  // Media folders vocabulary.
-  $vocabulary = taxonomy_vocabulary_machine_name_load('media_folders');
-
-  // Media Root
-  // Leave alone for now.
-
-
-  // Images.
-  $term = new stdClass();
-  $term->vid = $vocabulary->vid;
-  $term->name = t("Images");
-  $term->format = "filtered_html";
-  taxonomy_term_save($term);
-
-    // Thumbnails.
-    $term->name = t('Thumbnails');
-    $term->parent = $term->tid;
-    unset($term->tid);
-    taxonomy_term_save($term);
-
-    // Icons.
-    $term->name = t('Icons');
-    unset($term->tid);
-    taxonomy_term_save($term);
-
-    // Banners.
-    $term->name = t('Banners');
-    unset($term->tid);
-    taxonomy_term_save($term);
-
-    // Blocks.
-    $term->name = t('Blocks');
-    unset($term->tid);
-    taxonomy_term_save($term);
-
-  // Documents.
-  unset($term->parent);
-  unset($term->tid);
-  $term->name = t("Documents");
-  $parent_term = taxonomy_term_save($term);
-
-    // Forms.
-    $term->parent = $term->tid;
-    $term->name = t("Forms");
-    unset($term->tid);
-    taxonomy_term_save($term);
-
-    // PDF.
-    $term->name = t("PDF");
-    unset($term->tid);
-    taxonomy_term_save($term);
-
-  // Video.
-  unset($term->parent);
-  unset($term->tid);
-  $term->name = t("Video");
-  $parent_term = taxonomy_term_save($term);
-
-    // YouTube.
-    $term->parent = $term->tid;
-    $term->name = t("YouTube");
-    unset($term->tid);
-    taxonomy_term_save($term);
-
-    // Vimeo.
-    $term->name = t("Vimeo");
-    unset($term->tid);
-    taxonomy_term_save($term);
-
-  // Success!
   variable_set('stanford_mediaconfig_installed_folders', TRUE);
+}
 
+function stanford_mediaconfig_remove_taxonomy_structure() {
+  foreach (stanford_mediaconfig_default_taxonomy_terms() as $machine_name => $info) {
+    $vocabulary = taxonomy_vocabulary_machine_name_load($machine_name);
+    taxonomy_vocabulary_delete($vocabulary->vid);
+  }
 }
 
 
@@ -384,19 +323,29 @@ function stanford_mediaconfig_enable_filedisplay() {
 
   // Hide all extra fields on file entity types by default.
   $fields = db_select('field_config_instance', 'fci')
-            ->fields('fci')
-            ->condition('entity_type', 'file', '=')
-            ->execute();
+    ->fields('fci')
+    ->condition('entity_type', 'file', '=')
+    ->execute();
 
-  // Set all fields to hidden by default on the default view mode.
   while ($fs = $fields->fetchAssoc()) {
     $instance = field_info_instance($fs['entity_type'], $fs['field_name'], $fs['bundle']);
+    if (NULL === $instance) {
+      // Log that the instance does not exist and then move on.
+      watchdog('stanford_mediaconfig', 'The !entity of type !bundle does not have an instance for field !field', array(
+          '!entity' => $fs['entity_type'],
+          '!bundle' => $fs['bundle'],
+          '!field' => $fs['field_name'],
+        ),
+        WATCHDOG_DEBUG
+      );
+      continue;
+    }
+    
     foreach ($instance['display'] as $k => $v) {
       $instance['display'][$k]['type'] = "hidden";
     }
     field_update_instance($instance);
   }
-
 
   // File Type Streams Allowed for Images
   // ---------------------------------------------------------------------------
@@ -650,44 +599,73 @@ function stanford_mediaconfig_set_video_file_display() {
       file_display_save((object) $display);
     }
   }
-
-
 }
 
 /**
- * Configure the permission settings for stanford roles
+ * Returns an array of permissions to grant to roles.
+ *
+ * @return array
+ *   Returns an array of permissions, some valid some are not.
+ */
+function stanford_mediaconfig_get_permissions() {
+  return array(
+   // 'view_files',
+    'create files',
+    'filter media',
+    'upload media',
+    'preview media',
+    'download files',
+    'edit own files',
+    'view own files',
+    'media grid view',
+    'media list view',
+    'delete own files',
+    'access media backend',
+    'view own private files',
+    'add media from remote sources',
+  );
+}
+
+/**
+ * Configure the permission settings for stanford roles.
  */
 function stanford_mediaconfig_configure_user_permissions() {
-
-  $perms = array(
-   // 'view_files' => 1,
-    'create files' => 1,
-    'filter media' => 1,
-    'upload media' => 1,
-    'preview media' => 1,
-    'download files' => 1,
-    'edit own files' => 1,
-    'view own files' => 1,
-    'media grid view' => 1,
-    'media list view' => 1,
-    'delete own files' => 1,
-    'access media backend' => 1,
-    'view own private files' => 1,
-    'add media from remote sources' => 1,
-  );
-
-  // STAFF ROLE.
-  $stanford_staff = user_role_load_by_name('Stanford Staff');
-  if ($stanford_staff) {
-    user_role_change_permissions($stanford_staff->rid, $perms);
+  // Create an array of valid and existing permissions
+  $modules = user_permission_get_modules();
+  $permissions = array();
+  foreach (stanford_mediaconfig_get_permissions() as $permission) {
+    if (isset($modules[$permission])) {
+      $permissions[] = $permission;
+    }
   }
 
-  // FACULTY ROLE.
-  $stanford_faculty = user_role_load_by_name('Stanford Faculty');
-  if ($stanford_faculty) {
-    user_role_change_permissions($stanford_faculty->rid, $perms);
+  if (FALSE !== ($stanford_staff = user_role_load_by_name(stanford_mediaconfig_get_stanford_staff_user_role_name()))) {
+    user_role_grant_permissions($stanford_staff->rid, $permissions);
   }
 
+  if (FALSE !== ($stanford_faculty = user_role_load_by_name(stanford_mediaconfig_get_stanford_faculty_user_role_name()))) {
+    user_role_grant_permissions($stanford_faculty->rid, $permissions);
+  }
+}
+
+/**
+ * Returns the name of the stanford staff user role.
+ *
+ * @return string
+ *   Returns the name of the staff user role.
+ */
+function stanford_mediaconfig_get_stanford_staff_user_role_name() {
+  return 'Stanford Staff';
+}
+
+/**
+ * Returns the name of the stanford faculty user role.
+ *
+ * @return string
+ *   Returns the name of the faculty user role.
+ */
+function stanford_mediaconfig_get_stanford_faculty_user_role_name() {
+  return 'Stanford Faculty';
 }
 
 //  ////////////////////////////////////////////////////////////////////////////
@@ -712,9 +690,7 @@ function stanford_mediaconfig_entity_info_alter(&$entity_info) {
  * @return [type]           [description]
  */
 function stanford_mediaconfig_media_token_to_markup_alter(&$element, $tag_info, $settings) {
-
-  if (module_exists('media_responsive') && module_exists('media_crop')) {
-
+  if (module_exists('media_responsive') && module_exists('stanford_media_crop')) {
     if (isset($element['content']['file']['#style_name']) &&
     $element['content']['file']['#style_name'] == "media_responsive_widest") {
       $element['#attributes']['class'][] = "file-media-responsive";
@@ -724,9 +700,7 @@ function stanford_mediaconfig_media_token_to_markup_alter(&$element, $tag_info, 
       unset($element['#attributes']['height']);
       unset($element['height']);
     }
-
   }
-
 }
 
 
@@ -748,7 +722,6 @@ function stanford_mediaconfig_preprocess_media_thumbnail(&$variables) {
 
     $variables['element']["#children"] = $new_html;
   }
-
 }
 
 

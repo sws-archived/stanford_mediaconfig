@@ -2,22 +2,24 @@ name = Stanford Media Configuration
 description = Provides configuration and customizations to the media module suite
 package = Stanford
 core = 7.x
+version = 7.x-1.0
 
 dependencies[] = media (>=7.x-2.0-unstable7+20-dev)
 dependencies[] = media_browser_plus (>=1.0-beta3)
-dependencies[] = media_crop (>=7.x-1.4)
-dependencies[] = media_responsive (>=7.x-1.0-alpha1)
-dependencies[] = media_youtube (>=7.x-2.0-rc1+11-dev)
+dependencies[] = stanford_media_crop (>=7.x-1.4)
+dependencies[] = media_responsive (7.x-1.x)
+dependencies[] = media_youtube (7.x-2.x)
 dependencies[] = media_vimeo (>=7.x-1.0-beta5)
 dependencies[] = mediafield
-dependencies[] = fitvids (>=7.x-1.8)
+dependencies[] = stanford_fitvids (>=7.x-1.8)
 dependencies[] = wysiwyg (>=7.x-2.1)
-dependencies[] = libraries
 dependencies[] = taxonomy
 dependencies[] = file_entity (>=7.x-2.0-unstable7)
 dependencies[] = html5_media (>=7.x-1.1-beta+0-dev)
-dependencies[] = mediafront (>=7.x-2.0-rc5+0-dev)
-dependencies[] = minplayer
+
+; Not supported in this version
+; dependencies[] = mediafront (>=7.x-2.0-rc5+0-dev)
+; dependencies[] = minplayer
 
 files[] = stanford_mediaconfig.admin.inc
 files[] = stanford_mediaconfig.install

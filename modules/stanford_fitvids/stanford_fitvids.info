@@ -1,0 +1,6 @@
+name = Stanford - FitVids
+description = jQuery plugin for fluid width video embeds. A modified version of the original Fitvids module.
+core = 7.x
+configure = admin/config/media/fitvids
+package = Stanford
+version = 7.x-1.8
