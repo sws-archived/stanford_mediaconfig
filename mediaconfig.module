@@ -649,12 +649,18 @@ function mediaconfig_media_token_to_markup_alter(&$element, $tag_info, $settings
 
     if (isset($element['content']['file']['#style_name']) &&
     $element['content']['file']['#style_name'] == "media_responsive_widest") {
-      $element['#attributes']['class'][] = "file-media-responsive";
-      $element['#attributes']['style'] = 'max-width:' . $element['content']['file']['#width'] . 'px;';
+
+      // Copy attributes over.
+      if (isset($element['content']['file']['#attributes'])) {
+        $element['#attributes'] = $element['content']['file']['#attributes'];
+      }
+
+      // Adjust some styles.
+      $style = isset($element['content']['file']['#attributes']['style']) ?  $element['content']['file']['#attributes']['style'] : '';
+      $element['#attributes']['style'] = $style . 'max-width:' . $element['content']['file']['#width'] . 'px;';
       $element['#attributes']['width'] = "100%";
-      $element['#width'] = "100%";
-      unset($element['#attributes']['height']);
-      unset($element['height']);
+      $element['#attributes']['height'] = 'auto';
+
     }
 
   }
