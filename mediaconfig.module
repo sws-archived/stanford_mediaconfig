@@ -240,6 +240,23 @@ function mediaconfig_enable_folders() {
   // Media folders vocabulary.
   $vocabulary = taxonomy_vocabulary_machine_name_load('media_folders');
 
+  if (empty($vocabulary)) {
+
+    // Create media_folders vocabulary because it doesn't exist yet.
+    $vocab = new stdClass();
+    $vocab->name = t('Media Folders');
+    $vocab->machine_name = 'media_folders';
+    $vocab->description = t('Media folders vocabulary for organizing media');
+    $vocab->heirarchy = 1;
+    $vocab->module = 'mediaconfig';
+    $vocab->weight = 1;
+
+    taxonomy_vocabulary_save($vocab);
+
+    $vocabulary = taxonomy_vocabulary_machine_name_load('media_folders');
+
+  }
+
   // Media Root
   // Leave alone for now.
 
