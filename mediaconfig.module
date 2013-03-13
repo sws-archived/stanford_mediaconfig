@@ -53,10 +53,12 @@ function mediaconfig_enable() {
   if (module_exists('wysiwyg')) {
     mediaconfig_enable_wysiwyg();
   }
-  else {
-    // This should never get here as it is in the dependencies but there have
-    // been cases where this may have errored during install.
-    drupal_set_message('ERROR: MISSING WYSIWYG MODULE', 'error');
+
+  // CKEDITOR
+  // ---------------------------------------------------------------------------
+
+  if (module_exists('ckeditor')) {
+    // mediaconfig_enable_ckeditor();
   }
 
 
@@ -125,6 +127,164 @@ function mediaconfig_requirements($phase) {
   return $req;
 }
 
+/*function mediaconfig_form_page_node_form_alter(&$form, &$form_state, $form_id) {
+
+  $setting = array(
+    "media_default--media_browser_my_files" => "media_default--media_browser_my_files",
+    "media_internet" => "media_internet",
+    "upload" => "upload",
+  );
+
+  $settings = array(
+    'ckeditor2' => array(
+      'plugins' => array(
+        'media' => array(
+          'global' => array(
+            'enabledPlugins' => $setting,
+          ),
+        ),
+      ),
+    ),
+  );
+
+      // drupal_add_js("Drupal.settings.ckeditor.plugins['media'].global = {enabledPlugins: {upload: 'upload'}};", array('type' => 'inline', 'scope' => 'footer', 'weight' => 4));
+
+  $settings = mediaconfig_prepare_media_settings();
+
+  drupal_add_js("console.log(Drupal.settings); console.log(Drupal.media.popups.mediaBrowser.getDefaults()); console.log(" . $settings . ");", array('type' => 'inline', 'scope' => 'footer', 'weight' => 5));
+
+}*/
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Adds form fields for wysiwyg settings but for use with ckeditor module
+ * instead of wysiwyg module. The form labels are changed, but
+ * the actual form fields and variables remain the same as found in
+ * media_admin_config_browser().
+ *
+ * @see media module: media/includes/media.admin.inc
+ */
+function mediaconfig_form_media_admin_config_browser_alter(&$form, &$form_state, $form_id) {
+
+  // Additional configuration if the CKEDITOR module is enabled.
+  $form['wysiwyg'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('CKEDITOR configuration'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#access' => module_exists('ckeditor'),
+  );
+  $plugins = media_get_browser_plugin_info();
+  $form['wysiwyg'][media_variable_name('wysiwyg_browser_plugins')] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Enabled browser plugins'),
+    '#options' => array(),
+    '#required' => FALSE,
+    '#default_value' => media_variable_get('wysiwyg_browser_plugins'),
+    '#description' => t('If no plugins are selected, they will all be available.'),
+  );
+  foreach ($plugins as $key => $plugin) {
+    $form['wysiwyg'][media_variable_name('wysiwyg_browser_plugins')]['#options'][$key] = !empty($plugin['title']) ? $plugin['title'] : $key;
+  }
+  $form['wysiwyg'][media_variable_name('wysiwyg_upload_directory')] = array(
+    '#type' => 'textfield',
+    '#title' => t("File directory for uploaded media"),
+    '#default_value' => media_variable_get('wysiwyg_upload_directory'),
+    '#description' => t('Optional subdirectory within the upload destination where files will be stored. Do not include preceding or trailing slashes.'),
+  );
+
+  if (module_exists('token')) {
+    $form['wysiwyg'][media_variable_name('wysiwyg_upload_directory')]['#description'] .= t('This field supports tokens.');
+    $form['wysiwyg']['tokens'] = array(
+      '#theme' => 'token_tree',
+      '#dialog' => TRUE,
+    );
+  }
+
+  $form['wysiwyg'][media_variable_name('wysiwyg_allowed_types')] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Allowed types in CKEDITOR'),
+    '#options' => file_entity_type_get_names(),
+    '#default_value' => media_variable_get('wysiwyg_allowed_types'),
+  );
+
+}
+
+/**
+ * Implements of hook_element_info_alter().
+ *
+ * Adds a callback to load global media settings for ckeditor media browser.
+ */
+function mediaconfig_element_info_alter(&$types) {
+
+  $types['text_format']['#pre_render'][] = 'mediaconfig_pre_render_text_format';
+
+}
+
+/**
+ * This function adds global media settings for the media browser when it's
+ * loaded from the wysiwyg icon in ckeditor.
+ *
+ * @param $element
+ *   A fully populated form element to add the editor to.
+ * @return
+ *   The same $element.
+ */
+function mediaconfig_pre_render_text_format($element) {
+
+  static $init = FALSE;
+
+  // TODO: This approach ideally ought to be bundled up with other changes
+  //       and contributed as a patch to ckeditor so that these media browser
+  //       settings are configurable per ckeditor profile. For this to happen
+  //       the settings would need to be added to the profile edit form and
+  //       saved to the profile. Then the settings would need to be retrieved
+  //       when a profile is loaded for use and they would need to be
+  //       converted and injected into Drupal.settings as is done here.
+
+  if ($init === FALSE) {
+
+    $settings = mediaconfig_prepare_media_settings();
+
+    $js = "Drupal.settings.ckeditor.plugins['media'].global = @settings;";
+
+    drupal_add_js(str_replace('@settings', $settings, $js), array('type' => 'inline', 'scope' => 'footer', 'weight' => 5));
+
+    $init = TRUE;
+
+  }
+
+  return $element;
+
+}
+
+/**
+ * Helper. Bundles up wysiwyg settings into an array and converts them to
+ * javascript in the manner they're expected.
+ *
+ * @return
+ *   Javascript object containing media browser settings for ckeditor.
+ */
+function mediaconfig_prepare_media_settings() {
+
+  $plugins = variable_get('media__wysiwyg_browser_plugins', array());
+
+  $types = variable_get('media__wysiwyg_allowed_types', array());
+
+  $settings = array(
+    'enabledPlugins' => array_combine($plugins, $plugins),
+    'file_directory' => variable_get('media__wysiwyg_upload_directory', ''),
+    'file_extensions' => variable_get('media__file_extensions', ''),
+    /*'max_filesize' => '',
+    'schemes' => array(),*/
+    'types' => array_combine($types, $types),
+    /*'uri_scheme' => '',*/
+  );
+
+  return drupal_json_encode($settings);
+
+}
 
 /**
  * Enable WYSIWYG Settings and configuration.
