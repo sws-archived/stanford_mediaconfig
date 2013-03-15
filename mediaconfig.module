@@ -127,6 +127,11 @@ function mediaconfig_requirements($phase) {
   return $req;
 }
 
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * For testing purposes only. Will be removed.
+ */
 /*function mediaconfig_form_page_node_form_alter(&$form, &$form_state, $form_id) {
 
   $setting = array(
@@ -146,8 +151,6 @@ function mediaconfig_requirements($phase) {
       ),
     ),
   );
-
-      // drupal_add_js("Drupal.settings.ckeditor.plugins['media'].global = {enabledPlugins: {upload: 'upload'}};", array('type' => 'inline', 'scope' => 'footer', 'weight' => 4));
 
   $settings = mediaconfig_prepare_media_settings();
 
@@ -276,10 +279,11 @@ function mediaconfig_prepare_media_settings() {
     'enabledPlugins' => array_combine($plugins, $plugins),
     'file_directory' => variable_get('media__wysiwyg_upload_directory', ''),
     'file_extensions' => variable_get('media__file_extensions', ''),
-    /*'max_filesize' => '',
-    'schemes' => array(),*/
+    'max_filesize' => '',
+    // TODO: Figure out a way to load these from a setting.
+    'schemes' => array('public' => 'public', 'youtube' => 'youtube', 'vimeo' => 'vimeo'),
     'types' => array_combine($types, $types),
-    /*'uri_scheme' => '',*/
+    'uri_scheme' => 'public',
   );
 
   return drupal_json_encode($settings);
