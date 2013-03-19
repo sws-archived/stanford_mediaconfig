@@ -13,6 +13,21 @@ define('MEDIA_UPLOAD_DIR', 'media');
  */
 
 
+/**
+ * Implements hook_menu().
+ */
+function mediaconfig_menu() {
+
+  $items['admin/config/media/mediaconfig'] = array(
+    'title' => 'Reset Media Configuration',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('mediaconfig_reset_form'),
+    'file' => 'mediaconfig.admin.inc',
+    'access arguments' => array('administer site configuration'),
+  );
+
+  return $items;
+}
 
 /**
  * Implements hook_enable().
