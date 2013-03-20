@@ -11,7 +11,6 @@ dependencies[] = media_youtube (7.x-2.x)
 dependencies[] = media_vimeo (>=7.x-1.0-beta5)
 dependencies[] = mediafield
 dependencies[] = fitvids (>=7.x-1.8)
-dependencies[] = wysiwyg (>=7.x-2.1)
 dependencies[] = libraries
 dependencies[] = taxonomy
 dependencies[] = file_entity (7.x-2.x)
