@@ -5,7 +5,7 @@
  * @author  Shea McKinney <shea@imagexmedia.com>
  */
 
-define('STANFORD_MEDIA_UPLOAD_DIR', 'media');
+define('MEDIA_UPLOAD_DIR', 'media');
 
 /**
  * TESTING PAGES
@@ -13,35 +13,25 @@ define('STANFORD_MEDIA_UPLOAD_DIR', 'media');
  */
 
 
-/**
- * Implements hook_help().
- */
-function stanford_mediaconfig_help($path, $arg) {
-  switch ($path) {
-    case 'admin/help#stanford_mediaconfig':
-      return '<p>' . t('help@stanford.edu') . '</p>';
-  }
-}
-
 
 /**
  * Implements hook_enable().
  * This is just like an installation profile for this module. In here we will
  * tackle most of the installation tasks for this module.
  */
-function stanford_mediaconfig_enable() {
+function mediaconfig_enable() {
 
 
   // MEDIA
   // ---------------------------------------------------------------------------
 
-  variable_set('media_root_folder', STANFORD_MEDIA_UPLOAD_DIR);
+  variable_set('media_root_folder', MEDIA_UPLOAD_DIR);
   variable_set('media__dialog_theme', 'seven');
   variable_set('image_jpeg_quality', 95);
 
   // FILE + ENTITIY DISPLAY SETTINGS
   // ---------------------------------------------------------------------------
-  stanford_mediaconfig_enable_filedisplay();
+  mediaconfig_enable_filedisplay();
 
 
   // MEDIA BROWSER PLUS
@@ -61,7 +51,7 @@ function stanford_mediaconfig_enable() {
   // ---------------------------------------------------------------------------
 
   if (module_exists('wysiwyg')) {
-    stanford_mediaconfig_enable_wysiwyg();
+    mediaconfig_enable_wysiwyg();
   }
   else {
     // This should never get here as it is in the dependencies but there have
@@ -88,17 +78,12 @@ function stanford_mediaconfig_enable() {
   // ahead of any other player PHP will suffer a critical error.
 
   // Set the display output of the file type 'video'
-  stanford_mediaconfig_set_video_file_display();
+  mediaconfig_set_video_file_display();
 
 
   // DEFAULT FOLDERS
   // ---------------------------------------------------------------------------
-  stanford_mediaconfig_enable_folders();
-
-
-  // USERS + Permissions
-  // ---------------------------------------------------------------------------
-  stanford_mediaconfig_configure_user_permissions();
+  mediaconfig_enable_folders();
 
 
   drupal_flush_all_caches();
@@ -108,7 +93,7 @@ function stanford_mediaconfig_enable() {
  * Implements hook_requirements().
  * Check to see if the cropping plugin is available
  */
-function stanford_mediaconfig_requirements($phase) {
+function mediaconfig_requirements($phase) {
 
   $req = array();
   $libraries = libraries_get_libraries();
@@ -146,7 +131,7 @@ function stanford_mediaconfig_requirements($phase) {
  * Run on hook_enable
  */
 
-function stanford_mediaconfig_enable_wysiwyg() {
+function mediaconfig_enable_wysiwyg() {
 
   // Settings found at /admin/config/media/browser.
   $allowed_types = array(
@@ -165,7 +150,7 @@ function stanford_mediaconfig_enable_wysiwyg() {
   );
   variable_set('media__wysiwyg_browser_plugins', $field_plugins);
 
-  variable_set('media__wysiwyg_upload_directory', STANFORD_MEDIA_UPLOAD_DIR);
+  variable_set('media__wysiwyg_upload_directory', MEDIA_UPLOAD_DIR);
 
   // End ettings found at /admin/config/media/browser.
 
@@ -227,10 +212,10 @@ function stanford_mediaconfig_enable_wysiwyg() {
  * Create default folders for the media library to keep stuff organized
  */
 
-function stanford_mediaconfig_enable_folders() {
+function mediaconfig_enable_folders() {
 
   // We do not want to duplicate the folder on every enable. Just store it once.
-  $one_run = variable_get('stanford_mediaconfig_installed_folders', FALSE);
+  $one_run = variable_get('mediaconfig_installed_folders', FALSE);
   if ($one_run) {
     return;
   }
@@ -254,6 +239,23 @@ function stanford_mediaconfig_enable_folders() {
 
   // Media folders vocabulary.
   $vocabulary = taxonomy_vocabulary_machine_name_load('media_folders');
+
+  if (empty($vocabulary)) {
+
+    // Create media_folders vocabulary because it doesn't exist yet.
+    $vocab = new stdClass();
+    $vocab->name = t('Media Folders');
+    $vocab->machine_name = 'media_folders';
+    $vocab->description = t('Media folders vocabulary for organizing media');
+    $vocab->heirarchy = 1;
+    $vocab->module = 'mediaconfig';
+    $vocab->weight = 1;
+
+    taxonomy_vocabulary_save($vocab);
+
+    $vocabulary = taxonomy_vocabulary_machine_name_load('media_folders');
+
+  }
 
   // Media Root
   // Leave alone for now.
@@ -322,7 +324,7 @@ function stanford_mediaconfig_enable_folders() {
     taxonomy_term_save($term);
 
   // Success!
-  variable_set('stanford_mediaconfig_installed_folders', TRUE);
+  variable_set('mediaconfig_installed_folders', TRUE);
 
 }
 
@@ -333,7 +335,7 @@ function stanford_mediaconfig_enable_folders() {
  * The file and entity displays
  */
 
-function stanford_mediaconfig_enable_filedisplay() {
+function mediaconfig_enable_filedisplay() {
 
   // $formatters = file_info_formatter_types();
   // We are just going to hardcode these for now....
@@ -451,7 +453,7 @@ function stanford_mediaconfig_enable_filedisplay() {
  * Configures the file display for video files
  * @return [type] [description]
  */
-function stanford_mediaconfig_set_video_file_display() {
+function mediaconfig_set_video_file_display() {
 
   //
   // DEFAULT VIEW MODE.
@@ -637,42 +639,6 @@ function stanford_mediaconfig_set_video_file_display() {
 
 }
 
-/**
- * Configure the permission settings for stanford roles
- */
-function stanford_mediaconfig_configure_user_permissions() {
-
-  $perms = array(
-   // 'view_files' => 1,
-    'create files' => 1,
-    'filter media' => 1,
-    'upload media' => 1,
-    'preview media' => 1,
-    'download files' => 1,
-    'edit own files' => 1,
-    'view own files' => 1,
-    'media grid view' => 1,
-    'media list view' => 1,
-    'delete own files' => 1,
-    'access media backend' => 1,
-    'view own private files' => 1,
-    'add media from remote sources' => 1,
-  );
-
-  // STAFF ROLE.
-  $stanford_staff = user_role_load_by_name('Stanford Staff');
-  if (isset($stanford_staff)) {
-    user_role_change_permissions($stanford_staff->rid, $perms);
-  }
-
-  // FACULTY ROLE.
-  $stanford_faculty = user_role_load_by_name('Stanford Faculty');
-  if (isset($stanford_faculty)) {
-    user_role_change_permissions($stanford_faculty->rid, $perms);
-  }
-
-}
-
 //  ////////////////////////////////////////////////////////////////////////////
 //  HOOKS N PATCHES FOR INCOMPATIBIILTY ISSUES
 //  ////////////////////////////////////////////////////////////////////////////
@@ -682,7 +648,7 @@ function stanford_mediaconfig_configure_user_permissions() {
  *
  * Add media_responsive view modes to the file entity type.
  */
-function stanford_mediaconfig_entity_info_alter(&$entity_info) {
+function mediaconfig_entity_info_alter(&$entity_info) {
   $entity_info['file']['view modes']['media_crop'] = array('label' => t('Media Crop'), 'custom settings' => FALSE);
 }
 
@@ -694,18 +660,24 @@ function stanford_mediaconfig_entity_info_alter(&$entity_info) {
  * @param  [type] $settings [description]
  * @return [type]           [description]
  */
-function stanford_mediaconfig_media_token_to_markup_alter(&$element, $tag_info, $settings) {
+function mediaconfig_media_token_to_markup_alter(&$element, $tag_info, $settings) {
 
   if (module_exists('media_responsive') && module_exists('media_crop')) {
 
     if (isset($element['content']['file']['#style_name']) &&
     $element['content']['file']['#style_name'] == "media_responsive_widest") {
-      $element['#attributes']['class'][] = "file-media-responsive";
-      $element['#attributes']['style'] = 'max-width:' . $element['content']['file']['#width'] . 'px;';
+
+      // Copy attributes over.
+      if (isset($element['content']['file']['#attributes'])) {
+        $element['#attributes'] = $element['content']['file']['#attributes'];
+      }
+
+      // Adjust some styles.
+      $style = isset($element['content']['file']['#attributes']['style']) ?  $element['content']['file']['#attributes']['style'] : '';
+      $element['#attributes']['style'] = $style . 'max-width:' . $element['content']['file']['#width'] . 'px;';
       $element['#attributes']['width'] = "100%";
-      $element['#width'] = "100%";
-      unset($element['#attributes']['height']);
-      unset($element['height']);
+      $element['#attributes']['height'] = 'auto';
+
     }
 
   }

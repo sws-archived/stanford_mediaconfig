@@ -1,6 +1,6 @@
-name = Stanford Media Configuration
+name = Media Configuration
 description = Provides configuration and customizations to the media module suite
-package = Stanford
+package = IXM
 core = 7.x
 
 dependencies[] = media (7.x-2.x)
@@ -15,12 +15,7 @@ dependencies[] = wysiwyg (>=7.x-2.1)
 dependencies[] = libraries
 dependencies[] = taxonomy
 dependencies[] = file_entity (7.x-2.x)
-dependencies[] = html5_media (>= "7.x-1.1-beta+0-dev")
-dependencies[] = mediafront (7.x-2.x)
-dependencies[] = minplayer
 
+files[] = mediaconfig.admin.inc
+files[] = mediaconfig.install
 
-files[] = stanford_mediaconfig.admin.inc
-files[] = stanford_mediaconfig.install
-
-configure = admin/config/stanford/mediaconfig
