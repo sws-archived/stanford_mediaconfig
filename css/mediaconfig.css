@@ -1,3 +1,7 @@
 .media-player {
   background: #555555;
 }
+.manualcrop-thumblist {
+  overflow:hidden;
+  overflow-x:hidden;
+}
