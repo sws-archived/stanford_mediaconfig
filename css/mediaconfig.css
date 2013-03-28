@@ -2,6 +2,7 @@
   background: #555555;
 }
 
+
 /* MEDIA ELEMENT CONTAINER COLLAPSE */
 .media-element-container {
   display: table-cell;
@@ -21,4 +22,9 @@
   max-width: 640px; /* If you have a better solution im all ears */
   display: block;
   clear: both;
+}
+
+.manualcrop-thumblist {
+  overflow:hidden;
+  overflow-x:hidden;
 }

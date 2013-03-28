@@ -3,14 +3,16 @@ description = Provides configuration and customizations to the media module suit
 package = IXM
 core = 7.x
 
+dependencies[] = file_entity (7.x-2.x)
+dependencies[] = fitvids (>=7.x-1.8)
+dependencies[] = libraries
+dependencies[] = manualcrop
 dependencies[] = media (7.x-2.x)
-dependencies[] = media_browser_plus (>=1.0-beta3)
+dependencies[] = media_browser_plus
 dependencies[] = media_crop (>=7.x-1.4)
 dependencies[] = media_youtube (7.x-2.x)
 dependencies[] = media_vimeo (>=7.x-1.0-beta5)
 dependencies[] = mediafield
-dependencies[] = fitvids (>=7.x-1.8)
-dependencies[] = libraries
 dependencies[] = taxonomy
 dependencies[] = file_entity (7.x-2.x)
 dependencies[] = media_wysiwyg_smart_tokens
