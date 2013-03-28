@@ -22,3 +22,8 @@
   display: block;
   clear: both;
 }
+
+.manualcrop-thumblist {
+  overflow:hidden;
+  overflow-x:hidden;
+}

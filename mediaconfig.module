@@ -1028,6 +1028,128 @@ function mediaconfig_set_video_file_display() {
 
 
 
+/**
+ * Implements hook_module_implements_alter().
+ *
+ * Changes the hook order so that mediaconfigs hook_form_alter() runs after
+ * other modules' hook_form_alter(). This was put in place in particular for
+ * altering the file_entity_add_upload() form to inject manualcrop into the
+ * initial file upload form process.
+ */
+function mediaconfig_module_implements_alter(&$implementations, $hook) {
+
+  if ($hook == 'form_alter') {
+    // Move mediaconfig_form_alter() to the end of the list. module_implements()
+    // iterates through $implementations with a foreach loop which PHP iterates
+    // in the order that the items were added, so to move an item to the end of
+    // the array, we remove it and then add it.
+    $group = $implementations['mediaconfig'];
+    unset($implementations['mediaconfig']);
+    $implementations['mediaconfig'] = $group;
+  }
+
+}
+
+/**
+ * Implements hook_form_alter().
+ *
+ * For now, this is used as a placeholder which is needed in order for
+ * hook_module_implements_alter() to properly change the ordering of
+ * mediaconfig's form_alters so that they run after other modules' form_alters.
+ * @see http://api.drupal.org/api/drupal/modules%21system%21system.api.php/function/hook_module_implements_alter/7
+ */
+function mediaconfig_form_alter(&$form, &$form_state, $form_id) {
+
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Adds descriptions to alt and title form fields that are used in media module
+ * but not applied to the form fields derived from file_entity module. This
+ * makes the descriptive text for these fields consistent.
+ *
+ * Adds manualcrop directly to image field upload in media browser upload form
+ * so image field images can be cropped during the process of adding them.
+ * Most of this is taken directly from manualcrop_form_file_entity_edit_alter()
+ * in manualcrop.module.
+ */
+function mediaconfig_form_file_entity_add_upload_alter(&$form, &$form_state) {
+
+  if (isset($form['field_file_image_alt_text'])) {
+    $form['field_file_image_alt_text'][$form['field_file_image_alt_text']['#language']][0]['value']['#description'] = t('Alternative text is used by screen readers, search
+        engines, and when the image cannot be loaded. By adding alt text you
+        improve accesibility and search engine optimization.');
+  }
+
+  if (isset($form['field_file_image_title_text'])) {
+    $form['field_file_image_title_text'][$form['field_file_image_title_text']['#language']][0]['value']['#description'] = t('Title text is used in the tool tip when a user hovers
+        their mouse over the image. Adding title text makes it easier to
+        understand the context of an image and improves usability.');
+  }
+
+  $step = (isset($form_state['step']) && in_array($form_state['step'], array(1, 2, 3))) ? $form_state['step'] : 1;
+
+  if ($step == 3) {
+
+    // Hide folder and tags fields to save space for manualcrop overlay.
+    $form['field_folder']['#access'] = FALSE;
+    $form['field_tags']['#access'] = FALSE;
+
+    if (module_exists('manualcrop') && isset($_GET['manualcrop'])) {
+
+      if ($form_state['storage']['type'] == 'image' && !empty($form_state['storage']['upload'])) {
+        $file = file_load($form_state['storage']['upload']);
+        $js_identifier = manualcrop_js_identifier($file);
+        $settings = array();
+
+        // If the parameters weren't correctly parsed, do it now.
+        if (!isset($_GET['manualcrop']) && strpos($_GET['q'], '?') !== FALSE) {
+          parse_str('q=' . str_replace('?', '&', $_GET['q']), $_GET);
+        }
+
+        // Check if the field info is passed.
+        if (!empty($_GET['manualcrop']) && is_array($_GET['manualcrop'])) {
+          $manualcrop = $_GET['manualcrop'];
+
+          if (!empty($manualcrop['entity_type']) && !empty($manualcrop['bundle']) && !empty($manualcrop['field_name'])) {
+            // Get the field instance.
+            $instance = field_info_instance($manualcrop['entity_type'], $manualcrop['field_name'], $manualcrop['bundle']);
+
+            if (!empty($instance)) {
+              // A field instance was found, use its settings.
+              $settings = $instance['widget']['settings'];
+
+              if (empty($settings['manualcrop_enable'])) {
+                // Manual Crop isn't enabled.
+                return;
+              }
+            }
+          }
+        }
+
+        // Prepare the form.
+        manualcrop_croptool_prepare_form($form, $form_state, $js_identifier, $settings);
+
+        // Add the croptool.
+        manualcrop_croptool_process($form, $form_state, $js_identifier, $file, NULL, $settings);
+
+        // Move manualcrop thumbnail to top of form.
+        $form['manualcrop']['#weight'] = -10;
+        // Hide the scroll css of manualcrop thumbnail.
+        $form['#attached']['css'][] = drupal_get_path('module', 'mediaconfig') . '/css/mediaconfig.css';
+
+        // Add the submit handler
+        $form['#submit'][] = 'manualcrop_croptool_submit';
+
+      }
+
+    }
+
+  }
+
+}
+
 
 //  ////////////////////////////////////////////////////////////////////////////
 //   END HOOKS N PATCHES
