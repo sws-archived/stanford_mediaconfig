@@ -30,6 +30,15 @@ function mediaconfig_menu() {
 }
 
 /**
+ * [mediaconfig_init description]
+ * @return [type] [description]
+ */
+function mediaconfig_init() {
+  drupal_add_css(drupal_get_path('module', 'mediaconfig') . "/css/mediaconfig.css");
+}
+
+
+/**
  * Implements hook_enable().
  * This is just like an installation profile for this module. In here we will
  * tackle most of the installation tasks for this module.
@@ -345,7 +354,13 @@ function mediaconfig_enable_wysiwyg() {
 
   // Foreach of the profiles get the settings and add the filter
   while ($record = $profiles->fetchAssoc()) {
+
     $settings = unserialize($record['settings']);
+
+    if (!is_array($settings)) {
+      $settings = unserialize($settings);
+    }
+
     $filter = $record['format'];
 
     // Check to see if the enabled markup is enabled on filter.
@@ -373,7 +388,6 @@ function mediaconfig_enable_wysiwyg() {
     // Allow crop and browser functionality in the wysiwyg.
     $settings['buttons']['media_crop_ckeditor'] = array('media_crop_edit_instance');
     $settings['buttons']['drupal']['media'] = 1;
-    $settings = serialize($settings);
 
     $wys = array(
       'format' => $filter,
@@ -523,24 +537,235 @@ function mediaconfig_enable_filedisplay() {
 
   // Display for IMAGE file type on DEFAULT view mode
   // ---------------------------------------------------------------------------
-  $settings = array(
-    'image_style' => 'media_responsive_widest',
-    'alt' => '[file:field_file_image_alt_text]',
-    'title' => '[file:field_file_image_title_text]',
-  );
 
-  $formatter = array(
+  // Just get rid of any old one then we will create new entries.
+  db_delete('file_display')
+    ->condition('name', '%%image__%%', 'LIKE')
+    ->execute();
+
+  $settings = array(
+    'name' => 'image__default__file_field_file_default',
+    'weight' => -45,
+    'status' => 0,
+    'settings' => NULL,
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__default__file_field_file_rendered',
+    'weight' => -50,
+    'status' => 1,
+    'settings' => array('file_view_mode' => 'default'),
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__default__file_field_file_table',
+    'weight' => -47,
+    'status' => 0,
+    'settings' => NULL,
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__default__file_field_file_url_plain',
+    'weight' => -48,
+    'status' => 0,
+    'settings' => NULL,
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__default__file_field_media_large_icon',
+    'weight' => -46,
+    'status' => 0,
+    'settings' => NULL,
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
     'name' => 'image__default__file_image',
     'weight' => -49,
     'status' => 1,
-    'settings' => $settings,
+    'settings' => array(
+      "image_style" => "",
+      "alt" => "[file:field_file_image_alt_text]",
+      "title" => "[file:field_file_image_title_text]",
+    ),
   );
+  drupal_write_record('file_display', $settings);
 
-  // Just get rid of any old one then save a new one.
-  db_delete('file_display')
-    ->condition('name', 'image__default__file_image')
-    ->execute();
-  drupal_write_record('file_display', $formatter);
+  $settings = array(
+    'name' => 'image__full__file_image',
+    'weight' => 5,
+    'status' => 1,
+    'settings' => array(
+      "image_style" => "large",
+    ),
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__media_crop__file_field_file_default',
+    'weight' => 0,
+    'status' => 0,
+    'settings' => NULL,
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__media_crop__file_field_file_rendered',
+    'weight' => 0,
+    'status' => 1,
+    'settings' => array(
+      'file_view_mode' => 'media_crop',
+    ),
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__media_crop__file_field_file_table',
+    'weight' => 0,
+    'status' => 0,
+    'settings' => NULL,
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__media_crop__file_field_file_url_plain',
+    'weight' => 0,
+    'status' => 0,
+    'settings' => NULL,
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__media_crop__file_image',
+    'weight' => 0,
+    'status' => 1,
+    'settings' => array(
+      "image_style" => "",
+      "alt" => "[file:field_file_image_alt_text]",
+      "title" => "[file:field_file_image_title_text]",
+    ),
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__media_crop__file_field_media_large_icon',
+    'weight' => 0,
+    'status' => 0,
+    'settings' => NULL,
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__preview__file_field_file_default',
+    'weight' => 0,
+    'status' => 0,
+    'settings' => NULL,
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__preview__file_field_file_rendered',
+    'weight' => 0,
+    'status' => 1,
+    'settings' => array(
+      'file_view_mode' => 'preview',
+    ),
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__preview__file_field_file_table',
+    'weight' => 0,
+    'status' => 0,
+    'settings' => NULL,
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__preview__file_field_file_url_plain',
+    'weight' => 0,
+    'status' => 0,
+    'settings' => NULL,
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__preview__file_field_media_large_icon',
+    'weight' => 0,
+    'status' => 0,
+    'settings' => NULL,
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__preview__file_image',
+    'weight' => 5,
+    'status' => 1,
+    'settings' => array(
+      "image_style" => "square_thumbnail",
+      "alt" => "[file:field_file_image_alt_text]",
+      "title" => "[file:field_file_image_title_text]",
+    ),
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__teaser__file_field_file_default',
+    'weight' => 0,
+    'status' => 0,
+    'settings' => NULL,
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__teaser__file_field_file_rendered',
+    'weight' => 0,
+    'status' => 1,
+    'settings' => array(
+      'file_view_mode' => 'teaser',
+    ),
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__teaser__file_field_file_table',
+    'weight' => 0,
+    'status' => 0,
+    'settings' => NULL,
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__teaser__file_field_file_url_plain',
+    'weight' => 0,
+    'status' => 0,
+    'settings' => NULL,
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__teaser__file_field_media_large_icon',
+    'weight' => 0,
+    'status' => 0,
+    'settings' => NULL,
+  );
+  drupal_write_record('file_display', $settings);
+
+  $settings = array(
+    'name' => 'image__teaser__file_image',
+    'weight' => 5,
+    'status' => 1,
+    'settings' => array(
+      "image_style" => "medium",
+      "alt" => "[file:field_file_image_alt_text]",
+      "title" => "[file:field_file_image_title_text]",
+    ),
+  );
+  drupal_write_record('file_display', $settings);
 
 
   // Field Instance Settings.
@@ -651,8 +876,6 @@ function mediaconfig_set_video_file_display() {
   $displays['default']['media_youtube_image'] = file_display_new('video', 'default', 'media_youtube_image');
   $displays['default']['media_vimeo_video'] = file_display_new('video', 'default', 'media_vimeo_video');
   $displays['default']['media_vimeo_image'] = file_display_new('video', 'default', 'media_vimeo_image');
-  $displays['default']['file_field_html5_player'] = file_display_new('video', 'default', 'file_field_html5_player');
-
 
   // Save them all once.
   foreach ($displays as $view_mode => $displayset) {
@@ -672,25 +895,6 @@ function mediaconfig_set_video_file_display() {
     }
   }
 
-  $displays['default']['file_field_html5_player'] = array(
-    'status' => TRUE,
-    'weight' => "-38",
-    'name' => "video__default__file_field_html5_player",
-    'settings' => array(
-      'template' => "jqueryui",
-      'preload' => 1,
-      'autoplay' => 0,
-      'loop' => 0,
-      'width' => "100%",
-      'height' => '400px',
-      'volume' => '80',
-      'sources' => 0,
-      'debug' => 0,
-    ),
-    'table' => 'file_display',
-    'type' => 'Local',
-    'export_type' => 1,
-  );
 
   $displays['default']['media_vimeo_image'] = array(
     'status' => TRUE,
@@ -822,46 +1026,7 @@ function mediaconfig_set_video_file_display() {
 //  HOOKS N PATCHES FOR INCOMPATIBIILTY ISSUES
 //  ////////////////////////////////////////////////////////////////////////////
 
-/**
- * Implements hook_entity_info_alter().
- *
- * Add media_responsive view modes to the file entity type.
- */
-function mediaconfig_entity_info_alter(&$entity_info) {
-  $entity_info['file']['view modes']['media_crop'] = array('label' => t('Media Crop'), 'custom settings' => FALSE);
-}
 
-/**
- * If media_responsive and media_crop both exist we need to create a patch
- * between the two to work as they both override themeable output.
- * @param  [type] $element  [description]
- * @param  [type] $tag_info [description]
- * @param  [type] $settings [description]
- * @return [type]           [description]
- */
-function mediaconfig_media_token_to_markup_alter(&$element, $tag_info, $settings) {
-
-  if (module_exists('media_responsive') && module_exists('media_crop')) {
-
-    if (isset($element['content']['file']['#style_name']) &&
-    $element['content']['file']['#style_name'] == "media_responsive_widest") {
-
-      // Copy attributes over.
-      if (isset($element['content']['file']['#attributes'])) {
-        $element['#attributes'] = $element['content']['file']['#attributes'];
-      }
-
-      // Adjust some styles.
-      $style = isset($element['content']['file']['#attributes']['style']) ?  $element['content']['file']['#attributes']['style'] : '';
-      $element['#attributes']['style'] = $style . 'max-width:' . $element['content']['file']['#width'] . 'px;';
-      $element['#attributes']['width'] = "100%";
-      $element['#attributes']['height'] = 'auto';
-
-    }
-
-  }
-
-}
 
 
 //  ////////////////////////////////////////////////////////////////////////////

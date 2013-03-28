@@ -1,3 +1,24 @@
 .media-player {
   background: #555555;
 }
+
+/* MEDIA ELEMENT CONTAINER COLLAPSE */
+.media-element-container {
+  display: table-cell;
+  border-collapse: collapse;
+}
+
+/*  IMAGE CAPTIONS */
+.media-media_crop .field-type-text-long {
+  font-style: italic;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* FITVIDS MAX WIDTH */
+.media-youtube-video,
+.media-vimeo-video {
+  max-width: 640px; /* If you have a better solution im all ears */
+  display: block;
+  clear: both;
+}

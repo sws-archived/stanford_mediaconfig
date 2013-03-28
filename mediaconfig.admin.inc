@@ -24,7 +24,7 @@ function mediaconfig_reset_form($form, &$form_state) {
 }
 
 /**
- * [stanford_mediaconfig_reset_form_submit description]
+ * [mediaconfig_reset_form_submit description]
  * @param  [type] $form       [description]
  * @param  [type] $form_state [description]
  * @return [type]             [description]
@@ -33,7 +33,7 @@ function mediaconfig_reset_form_submit($form, &$form_state) {
 
   // If the user confirms to reset the values just run the enable script again.
   if ($form_state['values']['confirm']) {
-    stanford_mediaconfig_enable();
+    mediaconfig_enable();
     drupal_set_message("Configuration has been reset", 'status');
   }
 
