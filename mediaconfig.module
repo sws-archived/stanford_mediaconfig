@@ -5,7 +5,8 @@
  * Developed at ImageX Media
  */
 
-define('MEDIA_UPLOAD_DIR', 'media');
+// define('MEDIA_UPLOAD_DIR', 'media');
+include_once 'media_image_styles.features.inc';
 
 /**
  * TESTING PAGES
@@ -49,7 +50,7 @@ function mediaconfig_enable() {
   // MEDIA
   // ---------------------------------------------------------------------------
 
-  variable_set('media_root_folder', MEDIA_UPLOAD_DIR);
+  // variable_set('media_root_folder', MEDIA_UPLOAD_DIR);
   variable_set('media__dialog_theme', 'seven');
   variable_set('image_jpeg_quality', 95);
 
@@ -418,18 +419,18 @@ function mediaconfig_enable_folders() {
   /**
    * Set up the media browser library folders like this.
    * -- Media Root
-   * -- Images
-   * --- Thumbnails
-   * --- Icons
-   * --- Banners
-   * --- Blocks
-   * -- Documents
-   * --- Forms
-   * --- PDF
-   * -- Video
-   * --- YouTube
-   * --- Vimeo
-   * --- Streaming
+   * --- Images
+   * ---- Thumbnails
+   * ---- Icons
+   * ---- Banners
+   * ---- Blocks
+   * --- Documents
+   * ---- Forms
+   * ---- PDF
+   * --- Video
+   * ---- YouTube
+   * ---- Vimeo
+   * ---- Streaming
    */
 
   // Media folders vocabulary.
@@ -458,8 +459,6 @@ function mediaconfig_enable_folders() {
   $root->name = t("Media Root");
   $root->format = "filtered_html";
   taxonomy_term_save($root);
-
-
 
   // Images.
   $term = new stdClass();

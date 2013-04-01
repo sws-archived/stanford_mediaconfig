@@ -16,7 +16,11 @@ dependencies[] = mediafield
 dependencies[] = taxonomy
 dependencies[] = file_entity (7.x-2.x)
 dependencies[] = media_wysiwyg_smart_tokens
+dependencies[] = image
 
 files[] = mediaconfig.admin.inc
 files[] = mediaconfig.install
+
+features[features_api][] = api:1
+features[image][] = square_thumbnail
 
