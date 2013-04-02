@@ -27,3 +27,31 @@
   overflow:hidden;
   overflow-x:hidden;
 }
+
+div #media-format-form #edit-options {
+  float: none;
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: solid 1px #CCC;
+  margin: 10px 0;
+}
+
+#media-format-form #edit-options label,
+#media-format-form #edit-options legend,
+#media-format-form #edit-options .fieldset-description {
+  display: block;
+  font-weight: bold;
+}
+
+body {
+  overflow-y: scroll;
+}
+
+.media-image-right {
+  float:right;
+}
+
+.media-image-left {
+  float:left;
+}

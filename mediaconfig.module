@@ -27,6 +27,12 @@ function mediaconfig_menu() {
     'access arguments' => array('administer site configuration'),
   );
 
+  $items['mediaconfig/format-submit'] = array(
+    'title' => 'Media Format Form Submit',
+    'page callback' => 'mediaconfig_format_submit_handler',
+    'access arguments' => array('media grid view'),
+  );
+
   return $items;
 }
 
@@ -273,14 +279,15 @@ function mediaconfig_pre_render_text_format($element) {
   //       when a profile is loaded for use and they would need to be
   //       converted and injected into Drupal.settings as is done here.
 
-  if ($init === FALSE) {
+  if ($init === FALSE && module_exists('ckeditor')) {
 
     $settings = mediaconfig_prepare_media_settings();
 
     $js = "Drupal.settings.ckeditor.plugins['media'].global = @settings;";
-
-    drupal_add_js(str_replace('@settings', $settings, $js), array('type' => 'inline', 'scope' => 'footer', 'weight' => 5));
-
+    drupal_add_js(
+      str_replace('@settings', $settings, $js),
+      array('type' => 'inline', 'scope' => 'footer', 'weight' => 5)
+    );
     $init = TRUE;
 
   }
@@ -1069,7 +1076,37 @@ function mediaconfig_module_implements_alter(&$implementations, $hook) {
  */
 function mediaconfig_form_alter(&$form, &$form_state, $form_id) {
 
+  if (module_exists('wysiwyg') && $form['#form_id'] == "file_entity_add_upload") {
+    $step = (isset($form_state['step']) && in_array($form_state['step'], array(1, 2, 3))) ? $form_state['step'] : 1;
+
+  }
+
 }
+
+/**
+ * Implements hook_media_format_form_prepare_alter().
+ */
+function mediaconfig_media_format_form_prepare_alter(&$form, $form_state, $file) {
+
+  if ($file->type !== "image") {
+    return;
+  }
+
+  drupal_add_css(drupal_get_path('module', 'mediaconfig') . "/css/mediaconfig.css");
+  drupal_add_js(drupal_get_path('module', 'mediaconfig') . "/js/mediaconfig.js", array('weight' => 50));
+
+  $form['options']['#title'] = 'Accessibility Required Fields';
+  $form['options']['#description'] = t('ACCESSIBILITY STANDARDS REQUIRED FIELDS:');
+  $form['options']['#collapsed'] = FALSE;
+  $form['options']['#collapisble'] = TRUE;
+  $form['options']['#attributes']['class'][] = "fieldset";
+
+  $form['options']['alt']['#required'] = TRUE;
+  $form['options']['title']['#required'] = TRUE;
+
+}
+
+
 
 /**
  * Implements hook_form_FORM_ID_alter().
@@ -1164,6 +1201,28 @@ function mediaconfig_form_file_entity_add_upload_alter(&$form, &$form_state) {
 //   END HOOKS N PATCHES
 //  ////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Ajax post submit handler for the fake format form when inserting a media
+ * image through the wysiwyg
+ * @return json string
+ */
+function mediaconfig_format_submit_handler() {
+  $data = isset($_REQUEST['formdata']) ? $_REQUEST : NULL;
+
+  // Do nothing if no data.
+  if (is_null($data)) {
+    print drupal_json_encode(array('status' => 'error', 'message' => 'No Data.', 'data' => $_REQUEST));
+    exit();
+  }
+
+  // Let other modules act on the data.
+  foreach (module_implements('media_insert_submit_form_submit') as $module) {
+    module_invoke($module, 'media_insert_submit_form_submit', $data);
+  }
+
+  print drupal_json_encode(array('status' => 'success'));
+  exit();
+}
 
 
 
