@@ -21,7 +21,7 @@ Drupal.media.formatForm.submit = function () {
 
   var titl = $("#edit-options .form-item-title input");
   if (titl.length) {
-    title = titl.val();
+    titl = titl.val();
     if (typeof titl == "undefined" || titl.length < 2) {
       alert('Please enter some descriptive title text');
       return false;
