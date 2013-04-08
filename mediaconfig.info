@@ -21,6 +21,3 @@ dependencies[] = image
 files[] = mediaconfig.admin.inc
 files[] = mediaconfig.install
 
-features[features_api][] = api:1
-features[image][] = square_thumbnail
-

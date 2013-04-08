@@ -5,9 +5,6 @@
  * Developed at ImageX Media
  */
 
-// define('MEDIA_UPLOAD_DIR', 'media');
-include_once 'media_image_styles.features.inc';
-
 /**
  * TESTING PAGES
  * /admin/config/media/browser
