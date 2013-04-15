@@ -93,7 +93,7 @@ function mediaconfig_enable() {
   // MEDIA RESPONSIVE
   // ---------------------------------------------------------------------------
 
-  /* No configuration for this but a hack/patch below */
+  /* Do not enable. Causes big issues! */
 
 
   // VIDEO + FitVids
@@ -458,18 +458,18 @@ function mediaconfig_enable_folders() {
   }
 
   // Media Root
-  $root = new stdClass();
-  $root->vid = $vocabulary->vid;
-  $root->name = t("Media Root");
-  $root->format = "filtered_html";
-  taxonomy_term_save($root);
+  // $root = new stdClass();
+  // $root->vid = $vocabulary->vid;
+  // $root->name = t("Media Root");
+  // $root->format = "filtered_html";
+  // taxonomy_term_save($root);
 
   // Images.
   $term = new stdClass();
   $term->vid = $vocabulary->vid;
   $term->name = t("Images");
   $term->format = "filtered_html";
-  $term->parent = $root->tid;
+//  $term->parent = $root->tid;
   taxonomy_term_save($term);
 
     // Thumbnails.

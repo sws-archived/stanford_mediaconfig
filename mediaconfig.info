@@ -9,14 +9,15 @@ dependencies[] = libraries
 dependencies[] = manualcrop
 dependencies[] = media (7.x-2.x)
 dependencies[] = media_browser_plus
-dependencies[] = media_crop (>=7.x-1.4)
 dependencies[] = media_youtube (7.x-2.x)
 dependencies[] = media_vimeo (>=7.x-1.0-beta5)
 dependencies[] = mediafield
 dependencies[] = taxonomy
 dependencies[] = file_entity (7.x-2.x)
-dependencies[] = media_wysiwyg_smart_tokens
 dependencies[] = image
+
+dependencies[] = media_browser_plus_helper
+dependencies[] = media_crop
 
 files[] = mediaconfig.admin.inc
 files[] = mediaconfig.install
