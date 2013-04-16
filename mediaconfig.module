@@ -719,7 +719,7 @@ function mediaconfig_enable_filedisplay() {
     'weight' => 5,
     'status' => 1,
     'settings' => array(
-      "image_style" => "square_thumbnail",
+      "image_style" => "media_thumbnail",
       "alt" => "[file:field_file_image_alt_text]",
       "title" => "[file:field_file_image_title_text]",
     ),
@@ -1004,7 +1004,7 @@ function mediaconfig_set_video_file_display() {
     'weight' => "-42",
     'name' => "video__preview__media_vimeo_image",
     'settings' => array(
-      'image_style' => 'square_thumbnail',
+      'image_style' => 'media_thumbnail',
     ),
     'table' => 'file_display',
     'type' => 'Local',
@@ -1017,7 +1017,7 @@ function mediaconfig_set_video_file_display() {
     'weight' => "-41",
     'name' => "video__preview__media_youtube_image",
     'settings' => array(
-      'image_style' => 'square_thumbnail',
+      'image_style' => 'media_thumbnail',
     ),
     'table' => 'file_display',
     'type' => 'Local',
