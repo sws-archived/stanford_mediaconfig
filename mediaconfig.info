@@ -15,7 +15,6 @@ dependencies[] = mediafield
 dependencies[] = taxonomy
 dependencies[] = file_entity (7.x-2.x)
 dependencies[] = image
-
 dependencies[] = media_browser_plus_helper
 dependencies[] = media_crop
 
