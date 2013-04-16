@@ -93,7 +93,7 @@ function mediaconfig_enable() {
   // MEDIA RESPONSIVE
   // ---------------------------------------------------------------------------
 
-  /* No configuration for this but a hack/patch below */
+  /* Do not enable. Causes big issues! */
 
 
   // VIDEO + FitVids
@@ -458,18 +458,18 @@ function mediaconfig_enable_folders() {
   }
 
   // Media Root
-  $root = new stdClass();
-  $root->vid = $vocabulary->vid;
-  $root->name = t("Media Root");
-  $root->format = "filtered_html";
-  taxonomy_term_save($root);
+  // $root = new stdClass();
+  // $root->vid = $vocabulary->vid;
+  // $root->name = t("Media Root");
+  // $root->format = "filtered_html";
+  // taxonomy_term_save($root);
 
   // Images.
   $term = new stdClass();
   $term->vid = $vocabulary->vid;
   $term->name = t("Images");
   $term->format = "filtered_html";
-  $term->parent = $root->tid;
+//  $term->parent = $root->tid;
   taxonomy_term_save($term);
 
     // Thumbnails.
@@ -1134,7 +1134,8 @@ function mediaconfig_wysiwyg_editor_settings_alter(&$settings, $context) {
       $preferred_groupings[] = array('Format', 'Font', 'FontSize', 'Styles', 'Table');
       $preferred_groupings[] = array('SelectAll', 'Find', 'Replace');
       $preferred_groupings[] = array('Flash', 'Smiley');
-      $preferred_groupings[] = array('CreateDiv', 'Maximize', 'SpellChecker', 'Scayt');
+      $preferred_groupings[] = array('CreateDiv', 'Maximize', 'SpellChecker', 'Scayt', 'iframe');
+      $preferred_groupings[] = array('media', 'media_element_left', 'media_element_right', 'media_element_inline');
 
       // An array to hold our newly grouped buttons.
       $new_grouped_toolbar = array();
