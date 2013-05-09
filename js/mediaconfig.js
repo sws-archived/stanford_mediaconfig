@@ -10,10 +10,18 @@ namespace('Drupal.mediaconfig');
 // Override JS
 Drupal.media.formatForm.submit = function () {
 
+  // @see Drupal.behaviors.mediaFormatForm.attach().
+  var buttons = $(parent.window.document.body).find('#mediaStyleSelector').parent('.ui-dialog').find('.ui-dialog-buttonpane button');
+
+  if ($(this).hasClass('fake-cancel')) {
+    buttons[1].click();
+    return false;
+  }
+
   var alt = $("#edit-options .form-item-alt input");
   if (alt.length) {
     alt = alt.val();
-    if (typeof alt == "undefined" || alt.length < 2) {
+    if (typeof alt == "undefined" || alt.length < 1) {
       alert('Please enter some alternative text');
       return false;
     }
@@ -22,7 +30,7 @@ Drupal.media.formatForm.submit = function () {
   var titl = $("#edit-options .form-item-title input");
   if (titl.length) {
     titl = titl.val();
-    if (typeof titl == "undefined" || titl.length < 2) {
+    if (typeof titl == "undefined" || titl.length < 1) {
       alert('Please enter some descriptive title text');
       return false;
     }
@@ -36,30 +44,21 @@ Drupal.media.formatForm.submit = function () {
     formdatavalues[$(v).attr("name")] = $(v).val();
   });
 
-// @see Drupal.behaviors.mediaFormatForm.attach().
-  var buttons = $(parent.window.document.body).find('#mediaStyleSelector').parent('.ui-dialog').find('.ui-dialog-buttonpane button');
-  if ($(this).hasClass('fake-cancel')) {
-    buttons[1].click();
-  }
-  else {
-
-    $.ajax({
-      cache: false,
-      success: function (data) {
-        // woot!?
-        buttons[0].click();
-      },
-      error: function (jqXHR, textStatus, errorThrown) {
-        // Do nothing here.
-        // console.log("ERROR");
-      },
-      type: 'POST',
-      url: Drupal.settings.basePath + 'mediaconfig/format-submit',
-      data: formdatavalues,
-      dataType: 'json'
-    });
-
-  }
+  $.ajax({
+    cache: false,
+    success: function (data) {
+      // woot!?
+      buttons[0].click();
+    },
+    error: function (jqXHR, textStatus, errorThrown) {
+      // Do nothing here.
+      // console.log("ERROR");
+    },
+    type: 'POST',
+    url: Drupal.settings.basePath + 'mediaconfig/format-submit',
+    data: formdatavalues,
+    dataType: 'json'
+  });
 
 };
 
