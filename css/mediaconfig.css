@@ -38,9 +38,35 @@ div #media-format-form #edit-options {
   font-weight: bold;
 }
 
-div .mbp-item-list .media-item .media-thumbnail a {
+div > .mbp-item-list .media-item .media-thumbnail a {
   display: inline-block;
 }
+
+div > .mbp-item-list .media-item .media-thumbnail .label-wrapper {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  height: 100%;
+  width: 100%;
+  display: block;
+  margin: 0px;
+  padding: 0px;
+}
+
+div > .mbp-item-list .media-item .media-thumbnail .label-wrapper label {
+  position: absolute;
+  bottom: 2px;
+  width: 124px;
+  display: block;
+  text-align: center;
+  left: 2px;
+}
+
+.mbp-item-list .media-item .label-wrapper:hover .media-filename {
+  border: none;
+  bottom: 6px;
+}
+
 
 .media-element {
   display: inline-block;
