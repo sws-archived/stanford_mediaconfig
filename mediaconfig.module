@@ -33,6 +33,7 @@ function mediaconfig_menu() {
   return $items;
 }
 
+
 /**
  * [mediaconfig_init description]
  * @return [type] [description]
@@ -64,9 +65,7 @@ function mediaconfig_enable() {
 
   // MEDIA BROWSER PLUS
   // ---------------------------------------------------------------------------
-
-  /* No special configuration needed yet */
-
+  variable_set('media_browser_plus_thumbnails_as_default_browser', TRUE);
 
   // MEDIA CROP
   // ---------------------------------------------------------------------------
@@ -92,7 +91,6 @@ function mediaconfig_enable() {
 
   // MEDIA RESPONSIVE
   // ---------------------------------------------------------------------------
-
   /* Do not enable. Causes big issues! */
 
 
@@ -115,8 +113,8 @@ function mediaconfig_enable() {
   // ---------------------------------------------------------------------------
   mediaconfig_enable_folders();
 
-
-  drupal_flush_all_caches();
+  // Clear all caches for funzies
+  // drupal_flush_all_caches();
 
   return;
 }
@@ -800,68 +798,13 @@ function mediaconfig_enable_filedisplay() {
   }
 
 
-  // File Type Streams Allowed for Images
-  // ---------------------------------------------------------------------------
-
-  db_delete('file_type_streams')
-    ->condition('type', 'image')
-    ->condition('stream', 'public')
-    ->condition('stream', 'vimeo', "or")
-    ->condition('stream', 'youtube', "or")
-    ->execute();
-
-  db_insert('file_type_streams')
-    ->fields(array(
-      'type',
-      'stream',
-    ))
-    ->values(array(
-      array(
-        'type'    => 'image',
-        'stream'  => 'public',
-      ),
-    )
-  );
-
-
-  // File Type Streams Allowed for Video
-  // ---------------------------------------------------------------------------
-
-  db_delete('file_type_streams')
-    ->condition('type', 'video')
-    ->condition('stream', 'public')
-    ->condition('stream', 'vimeo', "or")
-    ->condition('stream', 'youtube', "or")
-    ->execute();
-
-  db_insert('file_type_streams')
-    ->fields(array(
-      'type',
-      'stream',
-    ))
-    ->values(array(
-      array(
-        'type'    => 'video',
-        'stream'  => 'public',
-      ),
-      array(
-        'type'    => 'video',
-        'stream'  => 'vimeo',
-      ),
-      array(
-        'type'    => 'video',
-        'stream'  => 'youtube',
-      ),
-    )
-  );
-
-
-  // File Type Streams Allowed for Generic Files
-  // ---------------------------------------------------------------------------
-
-
-  // File Type Streams Allowed for Audio
-  // ---------------------------------------------------------------------------
+  /**
+  * FILE TYPE STREAMS REMOVED FROM FILE_ENTITY in version:
+  *
+  * version = "7.x-2.0-unstable7+76-dev"
+  * datestamp = "1366938185"
+  *
+  **/
 
 
 }

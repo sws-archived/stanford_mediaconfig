@@ -3,7 +3,7 @@ description = Provides configuration and customizations to the media module suit
 package = IXM
 core = 7.x
 
-dependencies[] = file_entity (7.x-2.x)
+dependencies[] = file_entity (>7.x-2.0-unstable7+76-dev)
 dependencies[] = fitvids (>=7.x-1.8)
 dependencies[] = libraries
 dependencies[] = manualcrop
