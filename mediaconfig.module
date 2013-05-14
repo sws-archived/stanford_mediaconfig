@@ -1143,16 +1143,41 @@ function mediaconfig_wysiwyg_editor_settings_alter(&$settings, $context) {
  */
 function mediaconfig_form_file_entity_add_upload_alter(&$form, &$form_state) {
 
+  if (isset($form['field_file_image_alt_text']) || isset($form['field_file_image_title_text'])) {
+
+  $form['accessibility_options']['#type'] = 'fieldset';
+  // $form['accessibility_options']['#title'] = 'Accessibility Required Fields';
+  $form['accessibility_options']['#description'] = t('ACCESSIBILITY STANDARDS REQUIRED FIELDS:');
+  $form['accessibility_options']['#collapsed'] = FALSE;
+  $form['accessibility_options']['#collapisble'] = TRUE;
+  $form['accessibility_options']['#attributes']['class'][] = "fieldset";
+
   if (isset($form['field_file_image_alt_text'])) {
+
     $form['field_file_image_alt_text'][$form['field_file_image_alt_text']['#language']][0]['value']['#description'] = t('Alternative text is used by screen readers, search
         engines, and when the image cannot be loaded. By adding alt text you
         improve accesibility and search engine optimization.');
+    $form['field_file_image_alt_text'][$form['field_file_image_alt_text']['#language']][0]['value']['#required'] = TRUE;
+
+    $alt = $form['field_file_image_alt_text'];
+    unset($form['field_file_image_alt_text']);
+    $form['accessibility_options']['field_file_image_alt_text'] = $alt;
+
   }
 
   if (isset($form['field_file_image_title_text'])) {
+
     $form['field_file_image_title_text'][$form['field_file_image_title_text']['#language']][0]['value']['#description'] = t('Title text is used in the tool tip when a user hovers
         their mouse over the image. Adding title text makes it easier to
         understand the context of an image and improves usability.');
+    $form['field_file_image_title_text'][$form['field_file_image_title_text']['#language']][0]['value']['#required'] = TRUE;
+
+    $title = $form['field_file_image_title_text'];
+    unset($form['field_file_image_title_text']);
+    $form['accessibility_options']['field_file_image_title_text'] = $title;
+
+  }
+
   }
 
   $step = (isset($form_state['step']) && in_array($form_state['step'], array(1, 2, 3))) ? $form_state['step'] : 1;
