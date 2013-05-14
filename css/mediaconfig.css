@@ -42,7 +42,7 @@ div > .mbp-item-list .media-item .media-thumbnail a {
   display: inline-block;
 }
 
-div > .mbp-item-list .media-item .media-thumbnail .label-wrapper {
+.media-item .label-wrapper {
   position: absolute;
   top: 0px;
   left: 0px;
@@ -53,7 +53,7 @@ div > .mbp-item-list .media-item .media-thumbnail .label-wrapper {
   padding: 0px;
 }
 
-div > .mbp-item-list .media-item .media-thumbnail .label-wrapper label {
+.media-item .label-wrapper label {
   position: absolute;
   bottom: 2px;
   width: 124px;
@@ -62,11 +62,10 @@ div > .mbp-item-list .media-item .media-thumbnail .label-wrapper label {
   left: 2px;
 }
 
-.mbp-item-list .media-item .label-wrapper:hover .media-filename {
+.media-item .label-wrapper:hover .media-filename {
   border: none;
   bottom: 6px;
 }
-
 
 .media-element {
   display: inline-block;
