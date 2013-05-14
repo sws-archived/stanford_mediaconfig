@@ -37,3 +37,16 @@ div #media-format-form #edit-options {
   display: block;
   font-weight: bold;
 }
+
+div .mbp-item-list .media-item .media-thumbnail a {
+  display: inline-block;
+}
+
+.media-element {
+  display: inline-block;
+}
+
+.media-element img {
+  max-width: 100%;
+  height: auto;
+}
