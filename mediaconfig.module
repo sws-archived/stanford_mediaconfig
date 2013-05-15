@@ -11,6 +11,8 @@
  */
 
 
+define('MEDIA_UPLOAD_DIR', 'media');
+
 /**
  * Implements hook_menu().
  */
@@ -53,10 +55,8 @@ function mediaconfig_enable() {
 
   // MEDIA
   // ---------------------------------------------------------------------------
-
-  // variable_set('media_root_folder', MEDIA_UPLOAD_DIR);
-  variable_set('media__dialog_theme', 'seven');
   variable_set('image_jpeg_quality', 95);
+
 
   // FILE + ENTITIY DISPLAY SETTINGS
   // ---------------------------------------------------------------------------
@@ -65,6 +65,8 @@ function mediaconfig_enable() {
 
   // MEDIA BROWSER PLUS
   // ---------------------------------------------------------------------------
+  variable_set('media_root_folder', MEDIA_UPLOAD_DIR);
+  variable_set('media__dialog_theme', 'seven');
   variable_set('media_browser_plus_thumbnails_as_default_browser', TRUE);
 
   // MEDIA CROP
@@ -467,7 +469,7 @@ function mediaconfig_enable_folders() {
   $term->vid = $vocabulary->vid;
   $term->name = t("Images");
   $term->format = "filtered_html";
-//  $term->parent = $root->tid;
+  //  $term->parent = $root->tid;
   taxonomy_term_save($term);
 
     // Thumbnails.
@@ -974,8 +976,6 @@ function mediaconfig_set_video_file_display() {
       file_display_save((object) $display);
     }
   }
-
-
 }
 
 //  ////////////////////////////////////////////////////////////////////////////
